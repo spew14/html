@@ -71,7 +71,7 @@
         <!-- Header -->
         <header class="text-center mb-8 relative">
             <h1 class="text-4xl sm:text-5xl md:text-6xl font-press-start title-glow">SPEW14 UNBLOCKED GAMES</h1>
-            <p class="text-gray-400 mt-2 text-sm sm:text-base">Unblocked games given to you by the Everything Site. And new updates every day! Jayce site https://fluffgaming123.github.io/Fluffstore2.github.io/</p>
+            <p class="text-gray-400 mt-2 text-sm sm:text-base">Unblocked games given to you by the Everything Site. And new updates every day!</p>
         </header>
 
         <!-- Action Buttons -->
@@ -107,6 +107,7 @@
                 <hr class="border-gray-600 my-6">
                 <form id="signup-form">
                      <h3 class="text-lg font-bold mb-2 text-center">Create Account</h3>
+                    <input type="text" id="signup-name" placeholder="Display Name" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
                     <input type="email" id="signup-email" placeholder="Email" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
                     <input type="password" id="signup-password" placeholder="Password" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">Sign Up</button>
@@ -115,7 +116,7 @@
             <!-- Logged In View -->
             <div id="logged-in-view" class="hidden text-center">
                  <h2 class="text-2xl font-press-start text-center mb-4">My Account</h2>
-                 <p class="mb-6">Welcome, <span id="user-email" class="font-bold"></span>!</p>
+                 <p class="mb-6">Welcome, <span id="user-display-name" class="font-bold"></span>!</p>
                  <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition">Logout</button>
             </div>
              <button id="back-to-games-from-account-btn" class="w-full mt-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition">Back to Games</button>
@@ -177,7 +178,7 @@
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, doc, setDoc, getDoc, limit, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Element References ---
@@ -200,7 +201,7 @@
         const loggedInView = document.getElementById('logged-in-view');
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
-        const userEmailSpan = document.getElementById('user-email');
+        const userDisplayNameSpan = document.getElementById('user-display-name');
         const logoutBtn = document.getElementById('logout-btn');
         const backToGamesFromAccountBtn = document.getElementById('back-to-games-from-account-btn');
 
@@ -219,7 +220,7 @@
         const messageInput = document.getElementById('message-input');
 
         // --- App State ---
-        let db, auth, userId, appId, userIsAnonymous;
+        let db, auth, userId, userDisplayName, appId, userIsAnonymous;
         let unsubscribeMessages = null;
         let userFavorites = [];
         let isShowingFavorites = false;
@@ -227,6 +228,7 @@
         let unreadServers = new Set();
         let pageLoadTimestamp = Date.now();
         let toastTimeout = null;
+        let userCache = {}; // Cache for display names
 
         // --- DATA DEFINITIONS ---
         const games = [
@@ -234,7 +236,7 @@
             { id: 'buckshotroulette', name: 'Buckshot Roulette', icon: 'https://i.ytimg.com/vi/hGIG6hKEHI0/hqdefault.jpg', instructions: 'Classic buckshot roulette.', url: 'https://db.duckmath.org/html/buckshot_roulette/index.html' },
             { id: 'clashroyale', name: 'Clash Royale', icon: 'https://play-lh.googleusercontent.com/gnSC6s8-6Tjc4uhvDW7nfrSJxpbhllzYhgX8y374N1LYvWBStn2YhozS9XXaz1T_Pi2q', instructions: 'Use your mouse to dodge the incoming asteroids!', url: 'https://db.duckmath.org/html/clash_royale/index.html' },
             { id: 'cc3d', name: 'Crazy Cattle 3d', icon: 'https://crazycattle3dgithub.io/data/image/crazy-cattle-3d-online.png', instructions: 'CC3D kinda tuff back in like may or somethin', url: 'https://db.duckmath.org/html/crazycattle3d/index.html' },
-            { id: 'twerkrace', name: 'Twerk Race 3d', icon: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxASEBUQEBIVFRUWFhUVFRUVFRcVFxUYFRUWFxYVGBUYHSggGBolGxUVITIhJSkrLi4uGB8zODMtNygtLisBCgoKDg0OGxAQGi0lICUvLS0vLS0tLS0tKy0tLS8tLS0tLS8tLS0tLS0tLy0tLy0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOEA4QMBEQACEQEDEQH/xAAcAAABBQEBAQAAAAAAAAAAAAAAAgMFBgcEAQj/xABKEAABAwEDCAYFCQUGBwEAAAABAAIDEQQhMQUGEhNBUWGBByJxcpGhMkKxwdEUIzNSYoKSsuEkc6Kz8BU0U8LD0xY1Y3SDk+Il/8QAHAEBAAIDAQEBAAAAAAAAAAAAAAIFAQMGBAcI/8QAPREAAgECBAIGBwYGAwADAAAAAAECAxEEBSExEkETUXGBscEGMmGRodHwFCIzUnLhIzQ1QrLxFSRiBxai/9oADAMBAAIRAxEAPwCQC7FnyxjjVFkGLCiyLHAsEWOMUGI7nZGtTPZAhs6m3Rnvj8q5T0lj92nLt8j1U9mdmaZ+ZcNzz5taoejj0qLs8zdL1F2vyJ0LpWQRPZHg0WaRxd7Bh7yq7EzvK3UdXk+H6Oj0j3l4Lb5nevOW4IBi3/Qyfu3/AJSoT9VkKnqPsMOk9B3dK5XC/jw7Sj9E/wCs4ftf+LJ7on/vz/3D/wA8a6mO59c9J/5OP6l4M1pbDggQHjmgihwNxRO2pGUVJOL2ZWrREWuLTsPlsPgraEuKKZw2IoujVlTfL6XwGSpmhq+hk1uOlM/i8jzouejsfpyilClH2I1By6WOiPy9UlxNy69feMSLYjRI45MVuR457jRUzCEFZJIbcpIkhDlJEkJWSQoLDIsW1RZFjjVFkWLCwRY7FioSMw3OyNaWeyJFZ0j5th+3Txafgub9I1/Ai/8A15M9NPmLzQd1Hj7Q8x+i8Po6/wCJNexeJvf4feWazRF7g0bT5bT4LqKkuGLZLDUXWqRprn9P4FnaABQYC4Kobud3GKiklsj1DIIBm2/RP7j/AMpUZ+qyM/VZhsnoO7pXKYX8eHaii9E/6zh+1/4snuif++v/AHD/AM8a6mO59b9KP5SP6l4M1pbDgwQAgIvLcGDx3T7j/XBevCz3ic/neH0jWXY/L5e4hpDQEr2TdospMNHirQj1yive0ZVZ26VpaN8oHi9UVPW31zP0dip9Hg5y6oN+6Jpz10aPzGl91DEimjXI45luieOpuNFTIIbKkSQhykTQ25SRJCVkkKasMixbVFkWOBRZFiwsEWOxYqEjMNzsjWlnsgR+czawA7nj2OCofSCN8JfqaPTTGczz9IO4fzKm9Hn/ANiX6fNG7+x9q8y+ZCgxkPdHvPs810WLntEvsjw/rVn2Lz8viN5Ry6GPMcYDiK1JwqMQN+1czjc26KThSV2t29v39p2eHy9zjxzdl8Tkjy3NXEHho/BVizjEp3uvceiWApW5+8l8n5QEnVIo7Hgfh2K2y/NI4iXRzVpfB/uV+IwrparVHTavo39135SrWWzPHLZmGP8AQd3SuUw348O1FF6J/wBZw/a/8WWDomH7ZJ+4d/MjXUx3PrXpR/KR/UvBmrPeGgucaAAkk4AC8lTbSV2cG3bVmaW7Pa1yl2pLYmeqA0OfTi51bzwAXO180qt2hoikq5hUd+HRfEayNnvaW0BdrW19elTv6/peNVCGYYii1xO66n8yNLHVY7u/b8yzZLzpFoeYJ2CPTFGOBLhU4VJ44cQvfg84U6qUlbq7epno+1RxKdGorcSsItoLWvBxAdXkCurqNOm2uopMvpP7fRpy36SKfdJGW5I61pi4ysP8QJVPQV5Q7j71ns+jyvEvqpz/AMWaa5dCj83MYepo1SOSZbonjqbjJUyCGypEkIcpImhtykiSErJI9CwzDHGqLIMcCiyLFhYIsdjN6gxHc641pZ7IHJnCP2Z3At/MB71TZ4r4Kfd4o9NPc4czqmR7RiQ2g+9T3rnMhlbFO/5X5HpjFyi4re6+Rq8MbYowCQA0Xk3DifFXVaqrucnZHbYWh0VONKPL4vn72ZXasvQGeUaWjSSQX400jQ07L8Nu1cbXoOUnOGsW213u53VDDT6KOl9F4HQ3OCyjGVovO/hWnkvN9mqPZGuWFq8XDwu5J5BzigdaY2M0nl2l6IrTqm+mJXrwdB0asask3bktW76edzzYzA1Vh5SlolbftL3am/Nu7rvYV1z2OXlszBH+g7ulcphvx4dqKL0U/rNDtf8AiyydEA/bJP3Dv5ka6qO59Z9Kf5WP6l4M0DPWCZ9gmbACXltNFoqXNqNNo4luktOKUnSaifPMVGUqUlHcx+zh4ZrHRvDPrljgy7EaVKVXNTw87cVjnuCdr2duwY+SywSmOVpbcJAKg0Y49RxoTSt2O8LbiKE1G7y1sSnSnD1l7S4ZEzetNoax7WaLCT8466g3huLuGzitVDLK1b72yZvo4SpVSaVl1lqzss+hG5+wxuBP2mtx5j2FdtTn/wBeUXyR7YYW2bYaa/unG/avmvAybNdtbXEOJPg1x9y8+GX8SKPqXpZPhybEv/zb3tLzNGcr5H55YxItiNMjjlW2J46m4yVMihBUiaG3KRJCHKSJISskj0LBhi2qJFjjVhkGLCiRY40qLMHZGVpZ7IjOWBWzyDgD4OB9yrM1jxYSovZ4Hpp+scvRzT5aAfqO8RQhcXlkmsQrdTLjKUniVf2mqvYHAhwBBuIIqD2hdE0mrM65OxjWXsjEWiT5sO67rg7RLb8BeLua5iclCco7Wb5HTUZzVNOLdmuT+R1WNs9NW6MPj+pIxjqHZQ1A8arw1MNScuJOz60yN3e6bT7yw5p5M0Z2u0WtxJDQB6pHq3AYXBWGB1rwUdbfI042tJ0mm33l4tA6juw+xdK9igexgTvQd3T7FyuG/Hh2oovRT+s0P1P/ABZZeh/++S/uT/MYupifWfSn+Vh+ryZrikcIInha9rmPaHNcC1zSKhwIoQRtBCw1fQw1fQy7M3IEP9qWiJxdIyCoia86XVjc1rGOJ9JrLgAfqt3KrpwjPEtPl80VFKnGeLkn/avNeBqitS4IPPen9nzk7GEjtw96jNtRfYe7K6UamNpJ8pJmPZoMra2HcHn+Aj3rfhV/GR03pxU4Mkre1wX/AO4l+cVdo+BsYkK2I0zZxvK2o8ctWNlTCGyskkIcpIkhtykiaErJk9CGGONUSLFtUWRY4FEix1l1/h8VF66Baaj0LlrkjbTZ7lC+CQfYf+UrwY+N8NUX/l+B66b+8iO6P30t7OIcPJcDgHbER+uRc5W7YmPf4GsTSaIrSq6c7AibbDFKayRMJ30Ol+IGq11KFOp68UzbTrVKfqyaOVmS4Rgz+J/xWj/j8P8Al+LNrxtd/wB3wRI2SRrLmsaO6L/1Xop0YU1aCSNE6kp+s7khN6J7D7FJ7Gt7GAu9B3dPsXK4b8eHaii9FP6zQ/U/8WWfoe/vcv7k/nYuojufWPSn+Wh+ryZqtom0RhWqmcKcptruCzYHPDose6RscYe70nBgDnd5wvKwoRTulqRUYp3S1OuO27x4fBZsSInpBdTJs/dA/iC1z9UtsjV8dT7fIyrMkftJ4RuP8TR716sEr1e5ln/8gz4cot1zivF+RdnlXSPhjZzSuWyKPPUZyuK2o8wgqRkQVJEkNlSJoQVlEkJWTINQMcaokWLCwQY4wKDMC9JYsReo5G5RaMwdmSuSrFr36o10SDpkfVpT2kLw4ySjSft095c5XhvtOIjDktX2L97EtkbMuCzTNnZJI5za0Di2nWaW30bxXK0cvp0pqab0Otw+VUqNRVE3ddnVbqLMveWY26Bh9UIBPyZm7zKXAtkbRgAEApwqKIDMM6LNkKxRyiW0aUrGGkDZm61zqdVmiBVpJpeQvDDLqUZKSvdHmwOEp4PERxFL1ou6vqtrFDzOz0dYbT8ofG0wvGjI1tS6NhcDpNdXrEUwONNi91kXuNzXEYyChVtZO+it5s+iyARvCFWNGys3e1Lg8+SM3eZWbgcZC0YALAGrfY45onQyjSY8UcKkVHaLwsNXVjbQrTo1FUg7NbFdlzPslnY+WzRlrw3HTe6raguFHE7vJejCNQqL26Hn9Isbi8wwThUlfhfFay5J9S6myEe5XiR81kzllK2pHlm7jJUzWhBUiSEFZJIbKkSQgqSJoSsmQCBiwosixxqiyDHK7FEiKBWCIsFYMF3zRsejCZDi/DujDzqfBUePq8VThXLxO79HcL0eH6WW8vBbebJ1eA6AEAIAQAgKl0q5ZlsmSp5oX6Eh1cbHDFuska1xb9oNLiDsIrsQHzhY4w4HSvrWtbyScST/AFVZZIHUiId6bWkPMbvRcGmug7e0gUPArN7g+t7NMHsa9uDmhw7HCo9qiRHUAIAQAgBAUDLVm1MrmbMW904eF45LoMNPpKal7+0+c5ph/suIlT5brsfy27iLLl6rFVfUQ9ZRKw2VIyhBKkSEOUkSQ2VIkjyqySPAVgMcBWCLHm3Cu04fFQeprerAFDDFgqJFnVYLMZZGxj1iB2DaeQqVqqzVODk+RvwuHeIrRpLm/wDfuRpsUYa0NaKAAADgLguYk3J3Z9QhCMIqMdloKWCQIAQAgBAUrpfycJ8lvYTSkkTgdxDwPfTmoTlwq5vw8OOXD1/7PnaciCeWGpIZI9rSbi5rXENcRxFDzWyL4opkZx4ZOL5Hdm/kiXKNqZZIQTpkabhhHEPTeTsuw3kgbVnYgfVsUYa0NaKAAADcAKAKJEWgBACAEAICv542LSiEoF7Df3T8DTzVhl9XhnwPn4nOekeE6Sgqy3j4P5PzKUSrs4cTXYskhslSJIQSpEkNkqRJCCVkkhKyZAFDI9ENpwH9UUJPka5Pkj0uqarFrGLWFAoYYsFRIsteZdlvdOR9hvtcfYPFVGZVdqa7X5HVejWE1liJdi8/L4lr1vBVNjrQ1vBLANbwSwDW8EsA1vBLANbwSwOTLFkZaIHwPuDxSoxaQatcK7QQDyUZRurE4ScJKSMysObMgnfHboI3aIAjcQx7XtBI0mg1LRwNNq8NSMoO1y6pVIVY8Vrl/wA07BDZ7PoQxMYC97iGNDQTWlaAcF6qF3C7KzFpdK7K23gTWt4LdY8oa3glgGt4JYBrUsA1qWAa0JYCZS1zS1wqCCCOBuKzFuLuiM6anFwls9DNLfZzFI6M+qado2HmKFdPSqKpBSXM+YYrDyw9aVKXJ/6fejmJW00CX70RldQ2SpomhslSJIQSskkeVWTIRipoFhuwk7K49I71RgPaopc2a4rmzwFDLFgrBEcjaSQAKkkADeTgoNpK7EYOUlFbs0vJ9lEUTYx6ov4nEnxquXrVHUm59Z9MweHWHoRpLkvjz+J0LWekEAIAQAgBAV/OHOuGy6AILtN2jpj6NnFxxPYNxvXlq4mMNFqWuAyiri+Jp2sr25vs/cZMmk7WOOkXUv2U2U4X+a8spOTuzeoKC4Yqxz5UzlbYo9MjTLjRsdaFxu0iDfQAcDs3qUa7pLr9htw+VvHVOFO1t5dXV9fIstktjXgXFrqVLTiLrxUXGi9sKsZ6cykq0JU31rrOlbTSCAEAIAQAgKvnnY/RnA+w72tPtHgrbLKu9N9q8zk/STCeriI9j8vl7ipkq3OUBp2b0fWGuY05TRNDZKyTQklSJISsge9BvE+Sh6z9hD1n7BsFSJMWCokRYKwYLBmfYtZPrD6MYr943N955KuzGrwUuFbvw5l3kGF6XEdI9oa9/L59xeVQHcAgBACAEAICNy/OWxaIxe4M5UJd4htOa0YiXDA9WDpqdVX5alEz1INkc1wvBa9vJwB8nFVstjqsqkoYmLvvdfD5lLsecFqiYGRzENGAIa4Ds0gaLXdrY6GrgcLVlxzir968BMFtfNaYnzPLzrIxUnZpi4DABDM4U6OHnGmraPwNUsFt1lXMdgTyIPxW9NpnE1IR4S2xP0mh28A+KtIu6TKGUeGTj1ClIiCAEAIAQDFusoljdG7Bwp2HYeRoVOlUdOamuRoxWHjiKMqUua/17mZlMwtcWuFCCQRuINCuqi1JJrmfM503CThLdO3uGiVMwj194ryPxWFo7BaOwwSthsEkrJI8qsgHPqarCVkErKx6CgFgrBEUCokbGj5s2HVWdoI6z+u772A5CnmuZx1bpKztstDvsowv2fDRT3er7/2JVeQtAQAgBACAEBCZffWSNm4OeefVb/nXjxT2RY4COkpdxmfSTLI3UEHqS65uGOrdHW/tNPurzOP3OLrLzL5ReItzivH9imhaTqVex6K4g80DV1qahkKN8dlstqOE4cJDQCkmm8sdd9Zt33RvXplD7kZnFVJx+01KK2T0LxkiarS3deOw/rXxC9OGnePD1FVjKdpcXX4kgvSeMEAIAQAgBAUjPWw6EolAukF/ebj4ingVe5ZW4oOD3XgcZ6QYTo6yrLaW/avmvMrRKtCgPY30N+BuKNXQlG6EStoaLMXdEou6GiVMmeIDwLJkUFgiKBWDBKZu2HX2hjCKtHWf3W4jmaDmvJjK3RUnLnsu092WYX7RiYwey1fYvnsaauWPoIIDhtuU2Mq0VLh4A8T8FOMGyLlY47Lll2kA8ChNKi6ldt5wU3TVtDCkTS0kwQAgKrlKcullcL7xG3jo3U/GXeKra74pu3YXWFioUVftf12HD0jZviSxQNBoYZWjSpWoeC113F2iV6K0LU7dRqy7FOOJc2r3uVGLMR1Pph/6/wD6Vdws6z/mIx04Pj+w4Mw8SZ7uEdPPSThZF5ynoofH9jTLJkdnyCOyGuiIWMrtBDQQ/tDutyVtGC6NR9hxFWvJ1Vefv4kTkC1uadGS58bjHI OdCe zAjgvHTbp1NSxr xVWpcUeesfWjW1g/QkTAgBACAEAICPy9YNfA9gHW9Jnebh43jmvRhK3RVVLls+w8OY4X7Th5Q57rtX1YzEldUfPbCSVIyOek3iFD1WQ9WXsZzkrabjyqA8QyOkUHE+QUd2Q3YkFZMl9zFsGhCZiL5DQd1t3ma+AXPZrW4qiprl4s6/IcN0dF1XvLwRZlVl8CAgsuWSjtYMHY8D+vtW6nLSxrkuZFraRLPktjxE0PxvoDiBsBXmna+htWx1KJkTLIGtLzg0Fx7AKn2LDdgld2KlkAGSWOuysr+3H8zgq6guKpfvLzGNU6LXXZfXcR3SlnBLFqbNZ2te8uEsmlgGioY0iovLiTj6g3q8w2CWJupXt7Dz5bg69WXSU43toVH/jXKVKCCDwd/uKxXo9hvzS96+RavLsT+XwZ5/xtlLDUQfhd/uJ/wDX8N1y96+Q/wCOxPyf/Z', instructions: 'ts a freaky ahh game', url: 'https://db.duckmath.org/html/twerk_race_3d/index.html' },
+            { id: 'twerkrace', name: 'Twerk Race 3d', icon: 'data:image/jpeg;base64,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 OdCe zAjgvHTbp1NSxr xVWpcUeesfWjW1g/QkTAgBACAEAICPy9YNfA9gHW9Jnebh43jmvRhK3RVVLls+w8OY4X7Th5Q57rtX1YzEldUfPbCSVIyOek3iFD1WQ9WXsZzkrabjyqA8QyOkUHE+QUd2Q3YkFZMl9zFsGhCZiL5DQd1t3ma+AXPZrW4qiprl4s6/IcN0dF1XvLwRZlVl8CAgsuWSjtYMHY8D+vtW6nLSxrkuZFraRLPktjxE0PxvoDiBsBXmna+htWx1KJkTLIGtLzg0Fx7AKn2LDdgld2KlkAGSWOuysr+3H8zgq6guKpfvLzGNU6LXXZfXcR3SlnBLFqbNZ2te8uEsmlgGioY0iovLiTj6g3q8w2CWJupXt7Dz5bg69WXSU43toVH/jXKVKCCDwd/uKxXo9hvzS96+RavLsT+XwZ5/xtlLDUQfhd/uJ/wDX8N1y96+Q/wCOxPyf/Z', instructions: 'ts a freaky ahh game', url: 'https://db.duckmath.org/html/twerk_race_3d/index.html' },
             { id: 'spiralroll', name: 'Spiral Roll', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/spiralroll.webp', instructions: 'omg so satisfying', url: 'https://db.duckmath.org/html/spiral_roll/index.html' },
             { id: 'stickmanhook', name: 'Stickman Hook', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/stickmanhook.webp', instructions: 'holy mobile game ahh', url: 'https://db.duckmath.org/html/stickman_hook/index.html' },
             { id: 'ragdollarchers', name: 'Ragdoll Archers', icon: 'https://play-lh.googleusercontent.com/XMiWEMPbuq13oVcwYQ6ySLtZnBf7WpJ3rb7v-TM4MdFOvWfo1Z2hzSEAApRXzEcshjY', instructions: 'this game is so addicting', url: 'https://db.duckmath.org/html/ragdoll_archers/index.html' },
@@ -246,7 +248,7 @@
             { id: 'ptrack', name: 'Poly Track', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/polytrack.webp', instructions: 'idk anything abt this game', url: 'https://db.duckmath.org/html/polytrack/index.html' },
             { id: 'happywheels', name: 'Happy Wheels', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/happpywheels.webp', instructions: 'HAPPY WEHLS', url: 'https://db.duckmath.org/html/happy_wheels/index.html' },
             { id: 'slowroads', name: 'Slow Roads.io', icon: 'https://old.slowroads.io/img.jpg', instructions: '1-877-KARSFORKIDS k a r s cars for kids', url: 'https://db.duckmath.org/html/slowroadsio/index.html' },
-            { id: 'granny', name: 'Granny', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/granny.webp', instructions: 'grannys house I dont wanna stay I dont wanna go', url: 'https://db.duckmath.org/html/granny/index.html' },
+            { id: 'granny', name: 'Granny', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/granny.webp', instructions: 'grannys house I dont wanna stay I dont wanna go', url: 'httpss://db.duckmath.org/html/granny/index.html' },
             { id: '1v1', name: '1v1.lol', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/1v1.lol-old.webp', instructions: 'REAL FORTNITE', url: 'https://db.duckmath.org/html/1v1lol/index.html' },
             { id: 'drivemad', name: 'Drive Mad', icon: 'https://play-lh.googleusercontent.com/V_egAxch0phxs10H_Z1QpWRrsH4phd8egT_5ZjYlFbXzXvwpUGpmJMn2h6HgbGkSlZSM', instructions: 'im mad because driving', url: 'https://db.duckmath.org/html/drive_mad/index.html' },
             { id: 'gunspin', name: 'Gun Spin', icon: 'https://play-lh.googleusercontent.com/fLqvWSVq5rENEvu32xl0hf96wwSHVwQm-_9xc6KZg9Vgv9PbAtf1CyBYW7i1mlAXoSA', instructions: 'idek', url: 'https://db.duckmath.org/html/gun_spin/index.html' },
@@ -256,7 +258,7 @@
             { id: 'holeio', name: 'Hole.io', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/hole.io.webp', instructions: 'no ads UNLIKE MOBILE GAMES', url: 'https://db.duckmath.org/html/holeio/index.html' },
             { id: 'geodash', name: 'Geometry Dash', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/geometrydash.webp', instructions: 'sorry its on scratch', url: 'https://scratch.mit.edu/projects/105500895/embed' },
             { id: 'solarsmash', name: 'Solar Smash', icon: 'https://play-lh.googleusercontent.com/X-4jN5PyZqa8YMEQoGSDhgxNGbzvoQT5tiArPZ_6RqD77SQ_gC0LdZpYb2cplO0XNGY=w526-h296-rw', instructions: 'knockoff universe sandbox', url: 'https://db.duckmath.org/html/solar_smash/index.html' },
-            { id: 'minecraft', name: 'Minecraft', icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANIAAADwCAMAAABCI8pNAAAAkFBMVEX///8AAAApKCqtpKHAtrPIvbrQxcLMzMy1q6jFurfUyMW5r6y8sq/d0c4mJSeVjYsgHyEXFxuWko/Z2dnl5eWKg4Cck5Hf39+Ce3nw8PCnnpvT09PBwcF1b20LCwtYU1JsZmQ+OzpjXlw1MjFKRkWdnZ2Dg4NaWloaGRl3d3fn2teNjY2trKxtbW1PT04xLjEVn6VlAAAK1ElEQVR4nO2Z2XasOg5AY6YwQ9UJhCKHmbohU9X//11LtgymQt+3Xv2ivVYSIwtZgwcgT08MwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMw/xfuLxojkQvh01T5fLyesDL658DXo6Eb5e3Iy7P6u/z8zP+KEB6wJ+HkN6F5qpF0yr6Rxw1356exvVi2gwY3Noj6aGq+DiU/hwJl9uRtH0okugrRYuuIq+iIVEu1ibcWSgq8fP0ZM101QnRFY9k0yKaR1mWtZaAP122owTLZfYLU1o1paIQIq9Lg3quUbov07eobQmYXrRISewaRP7aO5EURrs8tY268CGkyn7EH4TIfktTcBPu8PdScL7+pWu3hrQea2ovj7qj1P3ahXQb1Ah+g8WWoh8S2ZCUmZpQpW5rfl9E8a/OT0fSyDoKKZpQ+oud3aqZld1Z6IGJopBp3c87yHHsOI4vF9D30/f5Khrfx2H9HuYd+Qhrp/HXZvoXfZM61pY3fyXODTd9P1I40xYSyHQ3uRm7rgN/Atfz9YCGhSxDuxGkc4ygsZbKx8tMvBoh/RXjOMJSabp5Bu/Ei2jTaez7zshfDWXHtPtYy26ch0HMYh77pnQcnAraepWdiWqbNn5VkPirStGI36M0y74o5gicr8B0vSyYy6ZdcFDfmBZlVV+rISuv1wym+VKU17rPqC/LC+jcdjZgnBzKYeyAvriLErMQ9ZhruJYpqZoGfZQdiA2bjBPZdZkVUMhc12a/DVHR4nknzaKoAkMxLsFIKkQw43toYnK6KILJjj0RLt5YmbAPNrlR9aEa8rqbd9E6XVK5TSrV3rQaRbBRWKteBBvEsHVMOOrvkPQc3G+7heOVGdjGOU0hYT3AWgwTYQpcDElGCK5QVpyDkCZyO5ZXf3fzzo40teydoWqg2jtRDGP1sapgoTqonjijVQdGZ/Uwd2tZu11Idu24buzsqzT1TVc4sdPsTAxoG9aR3LpdW/qEi5TW4NFhRH1Y7t20e/pJN0cbVdESlbMR93xIqhrWgaT2qyZeNfEaXRfA7gLNej9mBOulqKp6H1IVOPHQj3jCdNKg60Ww3chmPA4YdCdnN6Yii03P9hSbAz+7LVw0TqwpGgTOQnUuZgWsH1t1SfurpgOaNTVxIVCHLU/lGX+BtI2wG6wu+5AcKYX1WSmD8wATbomksYEKIC8wb9qyPJLhwFUHs6TTfWLeRfSsfZZGHoCJZOmuhQZa1egi6JSXa0/QuOrWRWvsq6S9VDbg6Lek2HbIGCJjdbCOgTlk1MB0cCls2J+ob/pnF9KH9RjHBk7sm0vW0IQWZ2W0KYHD5e62MVAhpUGwapghBaZyXdbdNOFuqtIB074cSQc3nr1HfSB1CFsJ3X53zsK8c/9rSO4oZ74cC/c+rQnWjILCrKl3XuK46E5eFOreYRdSvx8wADDxJd4VFNDtZmpxYhrFQ0iuMr2uSmmh3j3hPa/uuJ6nFDxPj4m+ULeL+5OSB1CA3IgBMuxrG2EYJp6DvzHDdhz8CmnRZhzHCz2dO5hvhau8cOkXKizr+IHjgXrchF4YutrWQPe7uw3va/FcFxMVzH0nE5bdxkpJAihHG6umd8NBZdOFgs2koZQWRzXdfl6B2g2k5A7p81/NIDqPbhzmgWx4uBFsJjXevA1q38bxfbLgsBjn9a1F63WDEdI0lXXhAphV/OtBwjJXAbK7p5oh7n2q6eGZRGIAa6aVJmEya5XJGHEWN30vmIwOTHre2sLNlC5iVeI9NSlmYnt5/QOFddGYzBPeHcDjZrwNpC3i+jn7cBCoFTbate27np3Jmk0hhbQfctauTbctpJuYwyCDZ8YyM7KUGdr19Rytrq62PUzX40tl73pJkkAnPGxrziL06hryggm2MTR4ppl00vEoUm1PPg6hH4V8K8SNq4Sn0t7zcKfVIe0H7LSTafd00byLIXQa/axug0dQFDQ/kDbOtiwJQ3AKj2ChbW8v0R+5brXLKM/AKn1fQxrGMOzx3RAKkoZg/xM87KU5z0tww1HtEMSgKpH5Ei1uBWEfhjg5ks9Eqj2ERHa8fEtv24op8Sq8N4Fdo2s+Pho7DCGRKSmj7wOc9+BoFhseZNpEun5YWNpYuZQU8EqqeBF16PW+ei9qh9vtNuNrDhnBHCUUHZ6n5KF6hLTU8CF6AK/pjbxpffPuyg5zQF4aL9+QgDwJG+xJqByQpBBtuhQSPmBJsevLNxTDG8nr01WHpF0Fn/Rj61V4oV3D/Yk8tVPAOolgy0uXwHA0L7Vt9bg9yGArmesyCWPZK1OGL3bNpyyeTrwCN3d8KUkSOQ+ScU1T6C5bOXASUtNQ8fSshv36jSq+Tahw+tD7XZckTYbfJJSOBaRLQtVEe0lo+5gwuD3AdAJqBvSoFZUhzk6cOXWogfcsO0hwu0lCEwhEhySrkDSGiiWtqJRA+ikLyVoxaKvtFHeay7oN5dp2Qw8QFwEVCuhpSi233Mr1MAm8PPlgFdtQGQskGXkCFFjbMpYhQbCy1ooqoXxIQ7A+12ET6W+bFHZC/o6GvyW1XWUx1Ae2VlHjXtS2qSFFcFB92/oWOCJuCvqxabGstlayJMDtJvnsP6Ef5yD8LbCtnixxr/qsYL/CBZcktp1oCmkRnwdA2zsXzTqIMtom1ae8xiP7M5FRa/UEN+U7nFdkC6y3HrVrcb5e32ij1mSf1Nue1bHX4gEBbI//i5X3SnaGPOfZOVuya41vPEN2/pi/zmfS7fFTAsh6rNj5PI5f+qMDKp0LmEkzaIwzPC4UsqMYqrNUbzqp+wW5XrJz845G8WED/ja3rzMeEh19rGhoJCAb9UdGfIyTUwp+TYX+1DFRlcRJkbb6HMutlmT5CS5Pi4U6eBKcTrIrp1NB6rSnHO88nSZ9F/TL30p8Sod8yamjxQYOkSoBqCwgvp9IfFIXeCfdcgKnlrVtGQ/b0lVQTKlX6MP2LywRom2pUkvarjKMcIBd0LJyuXnkKYlxe8QmTNQFe9IhtfbktNsYLANpm+Z/axviFI6eTWw8bsutIm+Nzm+jgurefKGQZrFZTzEN5G0rF5oeH6tEIaUyvPvdjCnN8+V3SNY+pFTnBTZZbT1Vg26eQo1VHnNhfk/9ksnPT6rPjAgf8jCm+zCkOe2Rz29X0/nfDqgyXbf6yqym+5AW9J280UK8OIkj4xYZn4apfahdfh+mOw5vTDs5vXAxLYscYRcRftBHY6lKD31p+VqNQvq0B0Z+c/x2DhbvQ2odTjHy8rQPaVHxw/qDkPO0PYguvVv7KUi+QfPF9PoijAyLfUTwUJTrPqyTmq8/UoTTB2IyapOvzXeI27qbIz/SbuuUzOe6HDAp4Gpnb22etuYijHw+eD2bNz/0QcQ57EESsLwuPxTlcknoXqPZwsTG78zrbTDHHoEn1CU1gcLA7IYVj3aVObptkbvS4yA76e3B6X/Wew8igpiG9eTqtcxaRcZHwW5rgpnt31zH/8Wa0iOpoToeNvu11Rq6lwef/+5cOYhp/f/g62/Ry8vavPzZmqbK26Zi/q/x7Uj6ujVfjprG/y3/bNLXXz5vNxxFxDAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzAMwzDM/57/AFhZIIRSsYZuAAAAAElFTkSuQmCC', instructions: 'the real minecraft', url: 'https://db.duckmath.org/html/minecraft/index.html' },
+            { id: 'minecraft', name: 'Minecraft', icon: 'data:image/png;base64,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', instructions: 'the real minecraft', url: 'https://db.duckmath.org/html/minecraft/index.html' },
             { id: 'rgdllhit', name: 'Ragdoll Hit', icon: 'https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/3c892779be9dabb3589586c83ad3eeed/ragdoll-hit.png', instructions: 'RAGDOLL HIT i like this better than the other one', url: 'https://mageedu23.github.io/g50/class-12' },
             { id: 'pplplygrnd', name: 'People Playground', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_foljdagp_EXGmuFH1-9hm3li-58BZssX9A&s', instructions: 'ppl playground but im sad bc no mods', url: 'https://1games.io/game/ragdoll-playground/' },
             { id: 'ttshots', name: 'Tap Tap Shots', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/406/responsive/tap-tap-shots-512-xs.jpg', instructions: 'gren ben', url: '/games/2023/q/1/tap-tap-shots/index.html' },
@@ -280,9 +282,11 @@
             { id: 'idleants', name: 'Idle Ants', icon: 'https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/d769fe608502e4f17192cf496d1a4b16.jpeg', instructions: 'You are the ant', url: 'https://db.duckmath.org/html/idle_ants/index.html' },
             { id: 'obbybike', name: 'Obby but Bike', icon: 'https://play-lh.googleusercontent.com/YwxYsY3FW_zhGTZuYjT9MOpv48FKKl90uyM4eyqOjVCPLEbosk2NALJc64arXdPhjq7d', instructions: 'Wait from the blox', url: 'https://db.duckmath.org/html/obby_but_youre_on_a_bike/index.html' },
             { id: 'cheesechompers3d', name: 'Cheese Chompers 3D', icon: 'https://sprunki.la/assets/img/games/other-cheese-chompers-3d/logo-square.jpeg', instructions: 'crazy cattle but for 2026', url: 'https://db.duckmath.org/html/cheese_chompers_3d/index.html' },
-            { id: 'pvsb', name: 'PLants vs Brainrots', icon: 'https://steal-brainrot.io/data/image/plants-vs-brainrots.jpg', instructions: 'Yo jandels new game. THIS IS BOOOOOOTY', url: 'https://db.duckmath.org/html/plants_vs_brainrots/index.html' },
+            { id: 'pvsb', name: 'PLants vs Brainrots', icon: 'https://steal-brainrot.io/data/image/plants-vs-brainrots.jpg', instructions: 'Yo jandels new game. THIS IS BOOOOOOTY', url: 'httpsm://db.duckmath.org/html/plants_vs_brainrots/index.html' },
             { id: 'uno', name: 'Uno', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/uno.webp', instructions: 'UNO OMG OMG', url: 'https://db.duckmath.org/html/uno/index.html' },
             { id: 'cod', name: 'Cod Zombies', icon: 'https://img.itch.zone/aW1nLzE1ODIwNTg2LmpwZWc=/347x500/HFlGj%2F.jpeg', instructions: 'yo bo3 like Baby Jayce loves that game and Terry', url: 'https://db.duckmath.org/html/cod_zombies_portable/index.html' },
+            { id: '', name: '', icon: '', instructions: '', url: '' },
+            { id: '', name: '', icon: '', instructions: '', url: '' },
             { id: 'ritlife', name: 'RitLife', icon: 'https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQMWgIRmr1_PK-JOKBAbLveo1O-zfgcyrw2ncdJ006Vte91uo47Jc9uqU5ce3_V53nxsyzZ', instructions: 'Live a life you will remember', url: 'https://db.duck.theducklair.com/html/bitlife/index.html' },
             { id: 'gta6', name: 'GTA6', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdYPkiYoltq3qjATl4qQHs45Dqnu5lc-YPBOn6K7sKuxrY96_e_Z9f20oCbw7BtRBtEZ0CN2JVc2ReOV3cHXU2rL_714CXGABG6lgsxB5uOhWY7CrR5coi8B2xPQmXK_Adxw690RpM3zoEAVMWdvJN0ib3IkX1apU80UG7dPyc4j7jHROn5L-D3mBnE=w1280', instructions: 'GTA6 on spew14 before GTA6', url: 'https://dnrweqffuwjtx.cloudfront.net/games/2024/unity3/stickman-gta-city/index.html' },
             { id: 'puppetkiller', name: 'Puupet Killer', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdZ27xGXLFrt9aD3DS94U1QsB3VHJTS4YfUHghifHRZZT-_L7MnKtfql8U_l9NjGofR7-C3u9qWawOOFVrTpAiJi0AxMOnAludcpgYGMU3l1xmjrhGNL74oHQcOg6Nk90sfxuPnFeasnV77mC4fsliRQgU8Qgr31fwUDv8nAWLOHDhTeQe0ecnmbidHBWUMXsv-_pF6rbDqhJeZt7DTffRmva4OwZ1B3k2I0Llc=w1280', instructions: 'kill da puppet', url: 'https://unblocked-games.s3.amazonaws.com/games/puppet-killer/unblocked.html' },
@@ -304,10 +308,6 @@
             { id: '', name: '', icon: '', instructions: '', url: '' },
             { id: '', name: '', icon: '', instructions: '', url: '' },
             { id: '', name: '', icon: '', instructions: '', url: '' },
-            
-            
-            
-
             
             
         ];
@@ -350,10 +350,28 @@
                         userId = user.uid;
                         userIsAnonymous = user.isAnonymous;
                         if (!user.isAnonymous) {
+                            
+                            // --- FIX FOR OLD ACCOUNTS ---
+                            // If a logged-in user doesn't have a display name, 
+                            // set it to their email as a one-time update.
+                            if (!user.displayName && user.email) {
+                                userDisplayName = user.email;
+                                // Update their profile so this check only runs once
+                                try {
+                                    await updateProfile(user, { displayName: user.email });
+                                } catch (e) {
+                                    console.error("Error updating old profile:", e);
+                                }
+                            } else {
+                                userDisplayName = user.displayName;
+                            }
+                            // --- END FIX ---
+                            
                             updateAccountUI(user);
                             await loadFavorites();
                             favoritesBtn.classList.remove('hidden');
                         } else {
+                            userDisplayName = "Guest";
                             updateAccountUI(null);
                             userFavorites = [];
                             favoritesBtn.classList.add('hidden');
@@ -362,6 +380,7 @@
                         setupNotificationListeners();
                     } else {
                         userId = null;
+                        userDisplayName = "Guest";
                         userIsAnonymous = true;
                         updateAccountUI(null);
                         userFavorites = [];
@@ -463,11 +482,11 @@
             if(user && !user.isAnonymous) {
                 loggedOutView.classList.add('hidden');
                 loggedInView.classList.remove('hidden');
-                userEmailSpan.textContent = user.email;
+                userDisplayNameSpan.textContent = user.displayName || user.email;
             } else {
                 loggedOutView.classList.remove('hidden');
                 loggedInView.classList.add('hidden');
-                userEmailSpan.textContent = '';
+                userDisplayNameSpan.textContent = '';
             }
         }
 
@@ -475,8 +494,20 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
+            const name = document.getElementById('signup-name').value.trim();
+
+            if (name.length < 3) {
+                alert("Display Name must be at least 3 characters long.");
+                return;
+            }
+
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
+                
+                // Manually update local state since onAuthStateChanged might be slightly delayed
+                userDisplayName = name;
+                
                 showGameGrid();
             } catch (error) {
                 alert(`Signup failed: ${error.message}`);
@@ -645,11 +676,14 @@
             unreadServers.delete(serverId);
             updateNotificationDot();
 
+            // Clear user cache for this room
+            userCache = {};
+
             const sanitizedServerId = sanitizeForFirestore(serverId);
             const messagesCollectionPath = `/artifacts/${appId}/public/data/chatRooms/${sanitizedServerId}/messages`;
             const q = query(collection(db, messagesCollectionPath), orderBy("timestamp")); 
 
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            unsubscribeMessages = onSnapshot(q, async (snapshot) => {
                 chatMessages.innerHTML = '';
                 const messages = [];
                 snapshot.forEach((doc) => {
@@ -663,7 +697,10 @@
                     return timeA - timeB;
                 });
 
-                messages.forEach(msgData => displayMessage(msgData));
+                // Asynchronously display messages
+                for (const msgData of messages) {
+                    await displayMessage(msgData);
+                }
 
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, (error) => {
@@ -691,6 +728,7 @@
                  await addDoc(collection(db, messagesCollectionPath), {
                     text: messageText,
                     sender: userId,
+                    name: userDisplayName, // Add the user's display name
                     timestamp: serverTimestamp()
                 });
                 messageInput.value = '';
@@ -700,28 +738,68 @@
                 alert("Message could not be sent.");
             }
         }
+        
+        // --- Display Message Helper Functions ---
+        
+        // Gets a user's display name, caching it to avoid extra database reads
+        async function getUserDisplayName(senderId) {
+            if (userCache[senderId]) {
+                return userCache[senderId];
+            }
+            
+            // Check if it's the current user
+            if (senderId === userId) {
+                 userCache[senderId] = userDisplayName;
+                 return userDisplayName;
+            }
 
-        function displayMessage(data) {
+            // Not current user, and not in cache. Fetch from a /users/ collection.
+            // Note: This requires a specific database structure.
+            // For now, we will try to get it from the message data if it exists.
+            // This function will need to be expanded if we store user profiles separately.
+            // For this implementation, we'll rely on the 'name' field in the message.
+            return "Guest"; // Fallback
+        }
+
+
+        async function displayMessage(data) {
             const messageWrapper = document.createElement('div');
             const messageBubble = document.createElement('div');
+            const nameLabel = document.createElement('div');
+            
             messageWrapper.classList.add('flex', 'flex-col', 'max-w-xs');
             messageBubble.classList.add('px-4', 'py-2', 'rounded-lg', 'break-words');
-            
+            nameLabel.classList.add('text-xs', 'text-gray-400', 'mb-1');
+
+            let displayName = data.name || "Guest"; // Get name from message
+
             if (data.sender === userId) {
                 messageWrapper.classList.add('self-end', 'items-end');
                 messageBubble.classList.add('bg-purple-600');
+                nameLabel.classList.add('text-right');
+                nameLabel.textContent = "You";
             } else {
                 messageWrapper.classList.add('self-start', 'items-start');
                 messageBubble.classList.add('bg-gray-600');
+                nameLabel.classList.add('text-left');
+                nameLabel.textContent = displayName;
             }
+            
             messageBubble.textContent = data.text;
+            messageWrapper.appendChild(nameLabel);
             messageWrapper.appendChild(messageBubble);
             chatMessages.appendChild(messageWrapper);
         }
 
         // --- Event Listeners & Initializer ---
         closeGameBtn.addEventListener('click', showGameGrid);
-        messagingBtn.addEventListener('click', showMessagingView);
+        messagingBtn.addEventListener('click', () => {
+            if (userIsAnonymous) {
+                alert("Please create an account to use the messaging feature!");
+            } else {
+                showMessagingView();
+            }
+        });
         backToGamesBtn.addEventListener('click', showGameGrid);
         leaveServerBtn.addEventListener('click', showGameGrid);
         messageForm.addEventListener('submit', sendMessage);
