@@ -1,768 +1,1341 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spew14</title>
+    <title id="page-title">Spew14 Unblocked Games</title>
+    <link id="page-favicon" rel="icon" href="https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/retro_bowl_icon.webp" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Equivalent to Tailwind's gray-900 */
+            background-color: #0f172a; /* Slate 900 */
         }
         .font-press-start {
             font-family: 'Press Start 2P', cursive;
         }
-        /* Custom scrollbar for a more "gamer" feel */
         ::-webkit-scrollbar {
             width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #2d3748; /* gray-800 */
+            background: #1e293b;
         }
         ::-webkit-scrollbar-thumb {
-            background: #4a5568; /* gray-600 */
+            background: #334155;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #718096; /* gray-500 */
+            background: #475569;
         }
-        /* Prevent canvas/iframe from getting focus outline */
         canvas:focus, iframe:focus {
             outline: none;
         }
-        /* Simple glow effect for title */
         .title-glow {
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
-        }
-        #chat-messages {
-            scroll-behavior: smooth;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 25px rgba(168, 85, 247, 0.3);
         }
         .favorite-star {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 1.5rem;
-            color: #4a5568; /* gray-600 */
+            top: 8px;
+            right: 8px;
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.4);
             cursor: pointer;
-            transition: color 0.2s, transform 0.2s;
+            transition: all 0.2s;
+            z-index: 10;
+            user-select: none;
         }
         .favorite-star.favorited {
-            color: #f59e0b; /* amber-500 */
-            transform: scale(1.2);
+            color: #f59e0b;
+            transform: scale(1.15);
+            text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
         }
-        .game-card {
-            position: relative;
+        .favorite-star:hover {
+            color: #fbbf24;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-    <!-- Toast Notification -->
-    <div id="toast-notification" class="fixed bottom-5 right-5 bg-purple-600 text-white py-3 px-5 rounded-lg shadow-lg transition-all duration-300 opacity-0 transform translate-y-20" style="z-index: 100;">
-        <p>New message in <span id="toast-server-name" class="font-bold"></span>!</p>
+    <!-- Stealth Top Quick Bar -->
+    <div class="bg-slate-950/80 backdrop-blur border-b border-slate-800 text-xs py-2 px-4 sticky top-0 z-40 flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-3">
+            <span class="text-slate-400 flex items-center gap-1.5 font-medium">
+                <i class="fa-solid fa-shield-halved text-purple-400"></i>
+                <span>School Stealth Active</span>
+            </span>
+            <span class="text-slate-600">|</span>
+            <button id="quick-panic-btn" title="Panic Hotkey: ESC or ~" class="bg-red-600/90 hover:bg-red-600 text-white font-bold px-2.5 py-1 rounded text-[11px] transition flex items-center gap-1 shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Panic (ESC)</span>
+            </button>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="open-cloak-btn" class="text-slate-300 hover:text-purple-400 transition flex items-center gap-1">
+                <i class="fa-solid fa-mask"></i> Tab Cloak
+            </button>
+            <button id="open-tools-btn" class="text-slate-300 hover:text-purple-400 transition flex items-center gap-1">
+                <i class="fa-solid fa-calculator"></i> Study Tools
+            </button>
+            <button id="export-data-btn" class="text-slate-300 hover:text-purple-400 transition flex items-center gap-1" title="Export progress & saves">
+                <i class="fa-solid fa-download"></i> Save Backup
+            </button>
+            <label class="text-slate-300 hover:text-purple-400 transition flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-upload"></i> Import Save
+                <input type="file" id="import-data-file" accept=".json" class="hidden">
+            </label>
+        </div>
     </div>
 
+    <!-- Custom Modal Dialog -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-purple-500/40 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all">
+            <h3 id="modal-title" class="font-press-start text-sm text-purple-400 mb-3">Notice</h3>
+            <p id="modal-message" class="text-slate-300 mb-6 text-xs leading-relaxed"></p>
+            <button id="modal-close-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg transition duration-200 text-xs">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Cloaker Modal -->
+    <div id="cloak-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-press-start text-xs text-purple-400 flex items-center gap-2">
+                    <i class="fa-solid fa-user-ninja"></i> Tab Cloaking Options
+                </h3>
+                <button id="close-cloak-btn" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">Disguise this browser tab title and favicon to fool screen monitoring tools.</p>
+            
+            <div class="space-y-2 mb-6">
+                <button data-cloak="classroom" class="cloak-preset-btn w-full bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs p-3 rounded-lg flex items-center justify-between text-left transition">
+                    <span class="flex items-center gap-2">🎓 <b>Google Classroom</b></span>
+                    <span class="text-[10px] text-slate-400">Classes</span>
+                </button>
+                <button data-cloak="docs" class="cloak-preset-btn w-full bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs p-3 rounded-lg flex items-center justify-between text-left transition">
+                    <span class="flex items-center gap-2">📄 <b>Google Docs</b></span>
+                    <span class="text-[10px] text-slate-400">Untitled document</span>
+                </button>
+                <button data-cloak="drive" class="cloak-preset-btn w-full bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs p-3 rounded-lg flex items-center justify-between text-left transition">
+                    <span class="flex items-center gap-2">📁 <b>Google Drive</b></span>
+                    <span class="text-[10px] text-slate-400">My Drive</span>
+                </button>
+                <button data-cloak="canvas" class="cloak-preset-btn w-full bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs p-3 rounded-lg flex items-center justify-between text-left transition">
+                    <span class="flex items-center gap-2">🔴 <b>Canvas LMS</b></span>
+                    <span class="text-[10px] text-slate-400">Dashboard</span>
+                </button>
+                <button data-cloak="reset" class="cloak-preset-btn w-full bg-slate-900 border border-red-500/40 text-red-400 text-xs p-2.5 rounded-lg text-center hover:bg-red-950/40 transition">
+                    Reset to Default Title
+                </button>
+            </div>
+            
+            <div class="text-[11px] bg-slate-900 p-3 rounded border border-slate-700 text-slate-400">
+                💡 <b>Panic Key Tip:</b> Press <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-purple-300">ESC</kbd> or <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-purple-300">~</kbd> anytime to instantly open Google Classroom!
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Tools / Calculator / Notes Drawer -->
+    <div id="tools-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+                <h3 class="font-press-start text-xs text-purple-400 flex items-center gap-2">
+                    <i class="fa-solid fa-toolbox"></i> Classroom Utilities
+                </h3>
+                <button id="close-tools-btn" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            
+            <!-- Tool Tabs -->
+            <div class="flex border-b border-slate-700 mb-4">
+                <button id="tab-calc-btn" class="tool-tab-btn active border-b-2 border-purple-500 text-purple-400 font-medium px-4 py-2 text-xs">Calculator</button>
+                <button id="tab-notes-btn" class="tool-tab-btn border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium px-4 py-2 text-xs">Class Notes</button>
+                <button id="tab-timer-btn" class="tool-tab-btn border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium px-4 py-2 text-xs">Pomodoro Timer</button>
+            </div>
+
+            <!-- Calculator Panel -->
+            <div id="tool-calc-panel" class="space-y-3">
+                <input type="text" id="calc-display" readonly value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-right font-mono text-xl text-green-400 tracking-wider">
+                <div class="grid grid-cols-4 gap-2 text-sm font-bold">
+                    <button class="calc-btn bg-slate-700 hover:bg-slate-600 p-3 rounded" data-val="C">C</button>
+                    <button class="calc-btn bg-slate-700 hover:bg-slate-600 p-3 rounded" data-val="(">(</button>
+                    <button class="calc-btn bg-slate-700 hover:bg-slate-600 p-3 rounded" data-val=")">)</button>
+                    <button class="calc-btn bg-purple-600 hover:bg-purple-500 p-3 rounded" data-val="/">÷</button>
+
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="7">7</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="8">8</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="9">9</button>
+                    <button class="calc-btn bg-purple-600 hover:bg-purple-500 p-3 rounded" data-val="*">×</button>
+
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="4">4</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="5">5</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="6">6</button>
+                    <button class="calc-btn bg-purple-600 hover:bg-purple-500 p-3 rounded" data-val="-">-</button>
+
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="1">1</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="2">2</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val="3">3</button>
+                    <button class="calc-btn bg-purple-600 hover:bg-purple-500 p-3 rounded" data-val="+">+</button>
+
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded col-span-2" data-val="0">0</button>
+                    <button class="calc-btn bg-slate-800 hover:bg-slate-700 p-3 rounded" data-val=".">.</button>
+                    <button class="calc-btn bg-green-600 hover:bg-green-500 p-3 rounded" data-val="=">=</button>
+                </div>
+            </div>
+
+            <!-- Notes Panel -->
+            <div id="tool-notes-panel" class="hidden space-y-3">
+                <textarea id="class-notes-input" placeholder="Type your class notes, homework homework reminders, or formulas here... (auto-saved)" class="w-full h-48 bg-slate-900 border border-slate-700 text-xs p-3 rounded-lg focus:outline-none focus:border-purple-500 text-slate-200 resize-none font-mono"></textarea>
+                <div class="flex justify-between items-center text-[11px] text-slate-400">
+                    <span id="notes-status">Notes auto-saved locally</span>
+                    <button id="clear-notes-btn" class="text-red-400 hover:underline">Clear Notes</button>
+                </div>
+            </div>
+
+            <!-- Pomodoro Panel -->
+            <div id="tool-timer-panel" class="hidden text-center space-y-4 py-4">
+                <div id="timer-display" class="font-mono text-5xl font-bold text-purple-400">25:00</div>
+                <p class="text-xs text-slate-400">Focus timer to manage study & break intervals.</p>
+                <div class="flex justify-center gap-3">
+                    <button id="timer-start-btn" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-6 rounded-lg text-xs">Start Focus</button>
+                    <button id="timer-reset-btn" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg text-xs">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Container -->
-    <div id="app-container" class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div id="app-container" class="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
         
         <!-- Header -->
-        <header class="text-center mb-8 relative">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-press-start title-glow">SPEW14 UNBLOCKED GAMES</h1>
-            <p class="text-gray-400 mt-2 text-sm sm:text-base">Unblocked games given to you by the Everything Site. And new updates every day! If spew14 gets blocked the future url will be spew14.github.io/game</p>
+        <header class="text-center mb-6 relative">
+            <h1 class="text-3xl sm:text-5xl md:text-6xl font-press-start title-glow tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">
+                SPEW14 UNBLOCKED
+            </h1>
+            <p class="text-slate-400 mt-2 text-xs sm:text-sm max-w-xl mx-auto">
+                BRADAR IM BACK its been so long since ive updated but ill try to bring more quality updates more in the future using a gemini is a pain to use and idk how to code
+            </p>
+            
+            <!-- Search & Controls -->
+            <div class="max-w-lg mx-auto mt-5 flex gap-2">
+                <div class="relative flex-grow">
+                    <input type="text" id="search-input" placeholder="Search unblocked games..." class="w-full bg-slate-800 text-slate-100 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-purple-500 text-xs sm:text-sm shadow-inner transition">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                </div>
+                <button id="random-game-btn" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-dice"></i>
+                    <span class="hidden sm:inline">Random</span>
+                </button>
+            </div>
+
+            <!-- Filter Pills / Categories -->
+            <div class="flex flex-wrap justify-center gap-1.5 mt-4 text-xs" id="category-filters">
+                <button class="cat-pill active bg-purple-600 text-white px-3 py-1.5 rounded-full font-medium transition" data-cat="all">All Games</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="favorites">⭐ Favorites</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="offline">⚡ Built-In Offline</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="action">🔥 Action</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="sports">⚽ Sports</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="racing">🏎️ 3D & Racing</button>
+                <button class="cat-pill bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full font-medium transition" data-cat="casual">🎮 Casual</button>
+            </div>
         </header>
 
         <!-- Action Buttons -->
-        <div id="action-buttons" class="flex justify-center items-center gap-4 mb-8">
-            <button id="messaging-btn" class="relative bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                Messaging
-                <span id="notification-dot" class="hidden absolute top-0 right-0 block h-3 w-3 transform -translate-y-1/2 translate-x-1/2 rounded-full bg-red-600 ring-2 ring-white"></span>
+        <div id="action-buttons" class="flex flex-wrap justify-center items-center gap-3 mb-6">
+            <button id="messaging-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 font-semibold py-2 px-5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-comments text-purple-400"></i> Messaging Hub
             </button>
-            <button id="favorites-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                Favorites
+            <button id="account-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-blue-300 font-semibold py-2 px-5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-user text-blue-400"></i> Account
             </button>
-            <button id="account-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                Account
-            </button>
+        </div>
+
+        <!-- Recently Played Drawer -->
+        <div id="recent-container" class="hidden mb-6 bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-purple-400"></i> Recently Played
+            </div>
+            <div id="recent-grid" class="flex gap-3 overflow-x-auto pb-1">
+                <!-- Injected JS -->
+            </div>
         </div>
 
         <!-- Game Grid -->
-        <main id="game-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            <!-- Game cards will be injected here by JavaScript -->
+        <main id="game-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
+            <!-- Dynamic Injection -->
         </main>
 
-        <!-- Account View (Initially Hidden) -->
-        <div id="account-view" class="hidden w-full max-w-md mx-auto bg-gray-800 p-8 rounded-lg">
-             <!-- Logged Out View -->
+        <!-- Account View -->
+        <div id="account-view" class="hidden w-full max-w-md mx-auto bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl border border-slate-700">
+            <!-- Logged Out View -->
             <div id="logged-out-view">
-                <h2 class="text-2xl font-press-start text-center mb-6">Account</h2>
+                <h2 class="text-lg font-press-start text-center mb-6 text-purple-400">Account</h2>
                 <form id="login-form" class="mb-6">
-                    <h3 class="text-lg font-bold mb-2 text-center">Login</h3>
-                    <input type="email" id="login-email" placeholder="Email" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
-                    <input type="password" id="login-password" placeholder="Password" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Login</button>
+                    <h3 class="text-xs font-bold mb-3 text-slate-300 uppercase tracking-wider text-center">Login</h3>
+                    <input type="email" id="login-email" placeholder="Email" class="w-full bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 text-xs" required>
+                    <input type="password" id="login-password" placeholder="Password" class="w-full bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 text-xs" required>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition text-xs">Login</button>
                 </form>
-                <hr class="border-gray-600 my-6">
+                <hr class="border-slate-700 my-6">
                 <form id="signup-form">
-                     <h3 class="text-lg font-bold mb-2 text-center">Create Account</h3>
-                    <input type="email" id="signup-email" placeholder="Email" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
-                    <input type="password" id="signup-password" placeholder="Password" class="w-full bg-gray-700 text-white p-3 mb-3 rounded-md focus:outline-none" required>
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition">Sign Up</button>
+                    <h3 class="text-xs font-bold mb-3 text-slate-300 uppercase tracking-wider text-center">Create Account</h3>
+                    <input type="text" id="signup-name" placeholder="Display Name" class="w-full bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 text-xs" required>
+                    <input type="email" id="signup-email" placeholder="Email" class="w-full bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 text-xs" required>
+                    <input type="password" id="signup-password" placeholder="Password" class="w-full bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 text-xs" required>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-lg transition text-xs">Sign Up</button>
                 </form>
             </div>
+
+            <!-- Email Verification View -->
+            <div id="verification-view" class="hidden text-center">
+                <h2 class="text-base font-press-start text-center mb-4 text-purple-400">Verify Email</h2>
+                <p class="text-xs text-slate-300 mb-4">We sent a 6-digit verification code to <br><span id="verify-email-display" class="font-bold text-purple-300"></span></p>
+                
+                <div class="bg-slate-900/90 p-3 rounded-lg border border-amber-500/50 mb-4 text-xs text-amber-300 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">✉️ <span>Simulated Code:</span></span>
+                    <span id="demo-code-display" class="font-mono font-bold text-sm text-amber-400 bg-black/60 px-2 py-0.5 rounded border border-amber-500/40"></span>
+                </div>
+
+                <form id="verify-form" class="mb-4">
+                    <input type="text" id="verify-code-input" maxlength="6" placeholder="Enter 6-digit code" class="w-full text-center tracking-widest text-base bg-slate-700 text-white p-3 mb-3 rounded-lg border border-slate-600 focus:outline-none focus:border-purple-500 font-mono" required>
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-lg transition text-xs">Verify Email</button>
+                </form>
+                
+                <div class="flex flex-col gap-2 text-xs">
+                    <button id="resend-code-btn" type="button" class="text-purple-400 hover:underline">Resend Verification Code</button>
+                    <button id="cancel-verify-btn" type="button" class="text-slate-400 hover:text-white underline">Switch Account / Sign Out</button>
+                </div>
+            </div>
+
             <!-- Logged In View -->
             <div id="logged-in-view" class="hidden text-center">
-                 <h2 class="text-2xl font-press-start text-center mb-4">My Account</h2>
-                 <p class="mb-6">Welcome, <span id="user-email" class="font-bold"></span>!</p>
-                 <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition">Logout</button>
+                 <h2 class="text-base font-press-start text-center mb-2 text-purple-400">My Account</h2>
+                 <div class="inline-flex items-center gap-1.5 bg-emerald-950 border border-emerald-500/40 text-emerald-400 px-3 py-1 rounded-full text-[11px] mb-4">
+                    ✓ Email Verified
+                 </div>
+                 <p class="mb-6 text-xs text-slate-300">Welcome back, <span id="user-display-name" class="font-bold text-white"></span>!</p>
+                 <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-lg transition text-xs">Logout</button>
             </div>
-             <button id="back-to-games-from-account-btn" class="w-full mt-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition">Back to Games</button>
+            <button id="back-to-games-from-account-btn" class="w-full mt-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg transition text-xs">Back to Games</button>
         </div>
 
-
-        <!-- Messaging View (Initially Hidden) -->
+        <!-- Messaging View -->
         <div id="messaging-view" class="hidden">
             <!-- Join Server View -->
-            <div id="join-view" class="w-full max-w-md mx-auto bg-gray-800 p-8 rounded-lg">
-                <h2 class="text-2xl font-press-start text-center mb-6">Choose a Server</h2>
-                <div id="server-list" class="w-full flex flex-col gap-3 mb-4">
-                    <!-- Server buttons will be injected here -->
+            <div id="join-view" class="w-full max-w-md mx-auto bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl border border-slate-700">
+                <h2 class="text-lg font-press-start text-center mb-6 text-purple-400">Game Servers</h2>
+                <div id="server-list" class="w-full flex flex-col gap-3 mb-6">
+                    <!-- Server buttons -->
                 </div>
-                <button id="back-to-games-btn" class="w-full mt-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition duration-300">Back to Games</button>
+                <button id="back-to-games-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg transition text-xs">Back to Games</button>
             </div>
             <!-- Chat View -->
-            <div id="chat-view" class="hidden w-full max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 id="server-title" class="text-2xl sm:text-3xl font-press-start"></h2>
-                    <button id="leave-server-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Leave</button>
+            <div id="chat-view" class="hidden w-full max-w-3xl mx-auto bg-slate-800 p-4 sm:p-6 rounded-xl border border-slate-700 shadow-2xl">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-700">
+                    <h2 id="server-title" class="text-sm sm:text-base font-press-start text-purple-400"></h2>
+                    <button id="leave-server-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-1.5 px-3 rounded-lg transition text-xs">Leave</button>
                 </div>
-                <div id="chat-messages" class="h-96 bg-gray-800 rounded-lg p-4 overflow-y-auto mb-4 flex flex-col gap-3">
-                    <!-- Messages will be injected here -->
+                <div id="chat-messages" class="h-80 bg-slate-900 rounded-lg p-4 overflow-y-auto mb-4 flex flex-col gap-3 border border-slate-700">
+                    <!-- Messages inserted dynamically -->
                 </div>
-                <form id="message-form" class="flex gap-4">
-                    <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow bg-gray-700 text-white p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Send</button>
+                <form id="message-form" class="flex gap-2">
+                    <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow bg-slate-700 text-white p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 border border-slate-600 text-xs" required>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-5 rounded-lg transition text-xs">Send</button>
                 </form>
             </div>
         </div>
 
-        <!-- Game Player Container (Initially Hidden) -->
+        <!-- Game Player Container -->
         <div id="game-player" class="hidden flex-col items-center justify-center">
-            <div class="w-full max-w-4xl mx-auto">
-                 <div class="flex justify-between items-center mb-4">
-                    <h2 id="game-title" class="text-2xl sm:text-3xl font-press-start"></h2>
-                    <button id="close-game" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                        &times; Close
-                    </button>
+            <div class="w-full max-w-5xl mx-auto">
+                <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                    <h2 id="game-title" class="text-base sm:text-xl font-press-start text-purple-400"></h2>
+                    
+                    <div class="flex items-center gap-2">
+                        <button id="about-blank-btn" title="Launch game in stealth unblocked pop-up" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-1.5 px-3 rounded-lg transition text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-up-right-from-square text-purple-400"></i> Pop-Out (about:blank)
+                        </button>
+                        <button id="fullscreen-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-3 rounded-lg transition text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-expand"></i> Fullscreen
+                        </button>
+                        <button id="close-game" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 px-3 rounded-lg transition text-xs">
+                            ✕ Close
+                        </button>
+                    </div>
                 </div>
-                <!-- This container will hold either a canvas or an iframe -->
-                <div id="game-container" class="bg-black rounded-lg shadow-2xl overflow-hidden aspect-video">
-                    <!-- Game will be inserted here -->
+
+                <div id="game-container" class="bg-black rounded-xl shadow-2xl overflow-hidden aspect-video border border-slate-700 flex items-center justify-center relative">
+                    <!-- Embedded iframe or canvas inserted here -->
                 </div>
-                <div id="game-instructions" class="text-center text-gray-400 mt-4 p-4 bg-gray-800 rounded-lg">
-                    <!-- Instructions will be inserted here -->
+
+                <div id="game-instructions" class="text-center text-slate-300 mt-3 p-3 bg-slate-800 rounded-lg border border-slate-700 text-xs">
+                    <!-- Dynamic game description -->
                 </div>
             </div>
         </div>
-        
-        <!-- Footer -->
-        <footer class="text-center mt-12 text-gray-500 text-sm">
-            <p>&copy; 2025 Made by the Everything Site. All games are created for educational and entertainment purposes.</p>
-        </footer>
 
     </div>
 
-    <script type="module">
-        // --- Firebase Imports ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, doc, setDoc, getDoc, limit, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Footer -->
+    <footer class="text-center py-6 border-t border-slate-800/80 text-slate-500 text-xs mt-8">
+        <p>Spew14 Unblocked Games &bull; Unblocked Portal &bull; Press <kbd class="px-1 bg-slate-800 border border-slate-700 rounded text-slate-400">ESC</kbd> for Emergency Panic Mode</p>
+    </footer>
 
-        // --- Element References ---
-        const appContainer = document.getElementById('app-container');
+    <!-- App Logic -->
+    <script type="module">
+        // Servers
+        const servers = ['General', 'Gaming Hub', 'Memes & Chill', 'Feedback'];
+
+        // Game Database (Incorporating all games added from screenshots + built-in offline arcade)
+        const games = [
+            // Built-in Offline Canvas Arcade Games
+            { id: 'snake_builtin', name: 'Retro Snake (Built-In)', category: 'offline', builtIn: 'snake', icon: 'https://placehold.co/300x300/10b981/ffffff?text=Snake+Arcade', instructions: 'Use Arrow Keys or WASD to eat food and grow without crashing into walls!' },
+            { id: 'flappy_builtin', name: 'Flappy Bird (Built-In)', category: 'offline', builtIn: 'flappy', icon: 'https://placehold.co/300x300/f59e0b/ffffff?text=Flappy+Arcade', instructions: 'Press Spacebar or Click to jump through pipe obstacles.' },
+            { id: 'breakout_builtin', name: 'Block Breaker (Built-In)', category: 'offline', builtIn: 'breakout', icon: 'https://placehold.co/300x300/8b5cf6/ffffff?text=Block+Breaker', instructions: 'Use Mouse or Left/Right Arrow keys to move paddle and break all blocks!' },
+
+            // Games from Screenshot 1
+            { id: 'retrobowl', name: 'Retro Bowl', category: 'sports', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/retro_bowl_icon.webp', instructions: 'i wish it was madden instead', url: 'https://db.duckmath.org/html/retro_bowl/index.html' },
+            { id: 'buckshotroulette', name: 'Buckshot Roulette', category: 'action', icon: 'https://i.ytimg.com/vi/hGIG6hKEHI0/hqdefault.jpg', instructions: 'Classic buckshot roulette.', url: 'https://db.duckmath.org/html/buckshot_roulette/index.html' },
+            { id: 'clashroyale', name: 'Clash Royale', category: 'action', icon: 'https://play-lh.googleusercontent.com/gnSC6s8-6Tjc4uhvDW7nfrSJxpbhllzYhgX8y374N1LYvWBStn2YhozS9XXaz1T_Pi2q', instructions: 'Use your mouse to dodge the obstacles and take down enemy towers!', url: 'https://db.duckmath.org/html/clash_royale/index.html' },
+            { id: 'cc3d', name: 'Crazy Cattle 3d', category: 'racing', icon: 'https://crazycattle3dgithub.io/data/image/crazy-cattle-3d-online.png', instructions: 'CC3D kinda tuff back in like may or somethin', url: 'https://db.duckmath.org/html/crazycattle3d/index.html' },
+            { id: 'twerkrace', name: 'Twerk Race 3d', category: 'casual', icon: 'https://play-lh.googleusercontent.com/I3L9M2XvHk1k_L_1-YmYxX8S8V_U1v3b.png', instructions: 'Run through obstacles and gather food to win the ultimate race!', url: 'https://db.duckmath.org/html/twerk_race_3d/index.html' },
+            { id: 'spiralroll', name: 'Spiral Roll', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/spiralroll.webp', instructions: 'OMG so satisfying', url: 'https://db.duckmath.org/html/spiral_roll/index.html' },
+            { id: 'stickmanhook', name: 'Stickman Hook', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/stickmanhook.webp', instructions: 'holy mobile game ahh', url: 'https://db.duckmath.org/html/stickman_hook/index.html' },
+            { id: 'ragdollarchers', name: 'Ragdoll Archers', category: 'action', icon: 'https://play-lh.googleusercontent.com/XMiWEMPbuq13oVcwYQ6ySLtZnBf7WpJ3rb7v-TM4MdFOvWfo1Z2hzSEAApRXzEcshjY', instructions: 'this game is so addicting', url: 'https://db.duckmath.org/html/ragdoll_archers/index.html' },
+            { id: 'stealbrainrot', name: 'Steal a Brainrot', category: 'action', icon: 'https://play-lh.googleusercontent.com/iR1JNfTr0W_fDN8zaFuZYPYHdVjI1UzNSvFkbAyXwn8e3jEuKsyu73zqJVdHNEfQqLhC78EaPzpTWnL-X', instructions: 'ts is crazy', url: 'https://db.duckmath.org/html/steal_a_brainrot/index.html' },
+            { id: 'stuntcars', name: 'Madalin Stunt Cars 2', category: 'racing', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/madalin.webp', instructions: 'ITS THE REAL BEAM.MG', url: 'https://db.duckmath.org/html/madalin_stunt_cars_2/index.html' },
+            { id: 'basketrandom', name: 'Basket Random', category: 'sports', icon: 'https://scout.wgimager.com/f_webp/q_90/https://static.wgplayground.com/43105ae03bf75070f5e80a76bb59ac6e/wgplayground/c8a520f67cc563041d2a75bd8223939e.jpg', instructions: 'basket random', url: 'https://db.duckmath.org/html/basket_random/index.html' },
+            { id: 'sovietsniper', name: 'Soviet Sniper', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/cod.webp', instructions: 'not real call of duty', url: 'https://db.duckmath.org/html/soviet_sniper/index.html' },
+            { id: 'helixjump', name: 'Helix Jump', category: 'casual', icon: 'https://play-lh.googleusercontent.com/FJ_eBYG23JkzujCEPHIjUAUJcQOGfZzPxKCGZ9lOmj9aBZABvdftqAAx8MyDbpEXeRzC', instructions: 'molbile game 2', url: 'https://db.duckmath.org/html/helix_jump/index.html' },
+            { id: 'ptrack', name: 'Poly Track', category: 'racing', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/polytrack.webp', instructions: 'idk anything abt this game', url: 'https://db.duckmath.org/html/polytrack/index.html' },
+            { id: 'happywheels', name: 'Happy Wheels', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/happpywheels.webp', instructions: 'HAPPY WEHLS', url: 'https://db.duckmath.org/html/happy_wheels/index.html' },
+            { id: 'slowroads', name: 'Slow Roads.io', category: 'racing', icon: 'https://old.slowroads.io/img.jpg', instructions: '1-877-KARSFORKIDS k a r s cars for kids', url: 'https://db.duckmath.org/html/slowroadsio/index.html' },
+            { id: 'granny', name: 'Granny', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/granny.webp', instructions: 'grannys house I dont wanna stay I dont wanna go', url: 'https://db.duckmath.org/html/granny/index.html' },
+            { id: '1v1', name: '1v1.lol', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/1v1.lol-old.webp', instructions: 'REAL FORTNITE', url: 'https://db.duckmath.org/html/1v1lol/index.html' },
+            { id: 'drivemad', name: 'Drive Mad', category: 'racing', icon: 'https://play-lh.googleusercontent.com/V_egAxch0phxs10H_Z1QpWRrsH4phd8egT_5ZjYlFbXzXvwpUGpmJMn2h6HgbGkSlZSM', instructions: 'im mad because driving', url: 'https://db.duckmath.org/html/drive_mad/index.html' },
+            { id: 'gunspin', name: 'Gun Spin', category: 'action', icon: 'https://play-lh.googleusercontent.com/fLqVVswQ5REneVu32xl0hf96wwSHvWQm-_9xC6KZg9Vgv9PBatf1CyBYW7i1mIAXoSA', instructions: 'idek', url: 'https://db.duckmath.org/html/gun_spin/index.html' },
+            { id: 'subway', name: 'Subway Surfers', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/subway.webp', instructions: 'loagway soafers', url: 'https://db.duckmath.org/html/subway_surfers_barcelona/index.html' },
+            { id: 'bridgerace', name: 'Bridge Race', category: 'casual', icon: 'https://play-lh.googleusercontent.com/ym7h0Y7sjtsuZ-CR2tmvtsNEgPTkUfUpKDaUKcNHOvJS3bf7CiXa7Eyc23FbnzziPsc', instructions: 'im racing the bridge loaging or somethin', url: 'https://db.duckmath.org/html/bridge_race/index.html' },
+            { id: 'fnaf2', name: 'Fnaf 2', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/fnaf2.webp', instructions: 'im pooping my pants so hard its too scary', url: 'https://db.duckmath.org/html/fnaf2/index.html' },
+            { id: 'holeio', name: 'Hole.io', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/hole.io.webp', instructions: 'no ads UNLIKE MOBILE GAMES', url: 'https://db.duckmath.org/html/holeio/index.html' },
+            { id: 'geodash', name: 'Geometry Dash', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/geometrydash.webp', instructions: 'sorry its on scratch', url: 'https://scratch.mit.edu/projects/105500895/embed' },
+            { id: 'solarsmash', name: 'Solar Smash', category: 'casual', icon: 'https://play-lh.googleusercontent.com/X-4jN5PyzqA8YMEqOGSDhgXNgbzvoQT5tiArPZ_6RqD77SQ_gC0LDzYb2cp100XNGy=w526-h296-rw', instructions: 'knockoff universe sandbox', url: 'https://db.duckmath.org/html/solar_smash/index.html' },
+            { id: 'minecraft', name: 'Minecraft', category: 'casual', icon: 'https://placehold.co/300x300/10b981/ffffff?text=Minecraft', instructions: 'minecraft', url: 'https://db.duckmath.org/html/eaglercraft/index.html' },
+            { id: 'rgdllhit', name: 'Ragdoll Hit', category: 'action', icon: 'https://img.poki-cdn.com/cdn-cgi/image/quality=78,scq=50,width=314,height=314,fit=cover,f=auto/3c892779be9dabb3589586c83ad3eeed/ragdoll-hit.png', instructions: 'ragdoll hit', url: 'https://db.duckmath.org/html/ragdoll_hit/index.html' },
+            { id: 'pplygrnd', name: 'People Playground', category: 'action', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_foljdagp_EXgmUFH1-9hm3li-58bZSsX9A&s', instructions: 'PPL playground but im sad bc no mods', url: 'https://db.duckmath.org/html/people_playground/index.html' },
+            { id: 'ttshots', name: 'Tap Tap Shots', category: 'sports', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/406/responsive/tap-tap-shots-512-xs.jpg', instructions: 'gren ben', url: 'https://db.duckmath.org/html/tap_tap_shots/index.html' },
+            { id: 'paperio2', name: 'PAPER IO SO TUFF', category: 'casual', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTeBDhyvZbzipaeEDLMKVTJqPevw_qcoaujQ&s', instructions: 'fart', url: 'https://db.duckmath.org/html/paperio2/index.html' },
+            { id: 'templeruntwo', name: 'Temple Run 2', category: 'casual', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPoVgPWZY1nST2Hh4h0osetTpjIC4XJhDapQ&s', instructions: 'loager moblie game 3', url: 'https://db.duckmath.org/html/temple_run_2/index.html' },
+            { id: 'idleminer', name: 'Idle Mining Empire', category: 'casual', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/372/responsive/idle-mining-empire-512-xs.jpg', instructions: 'Mine like minecraft', url: 'https://db.duckmath.org/html/idle_mining_empire/index.html' },
+            { id: 'driftboss', name: 'Drift Boss', category: 'racing', icon: 'https://www.hoodamath.com/large/1024/driftboss_1024.png', instructions: 'Drift to the loge', url: 'https://www.hoodamath.com/mobile/games/drift-boss/game.html?nocheckorient=1' },
+            { id: 'stickmanragdoll', name: 'Stickman Ragdoll', category: 'action', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/57/responsive/stickman-xs.jpg', instructions: 'War Crimes', url: 'https://db.duckmath.org/html/stickman_ragdoll/index.html' },
+            { id: 'fortnite', name: 'Fort Night', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/fortnite.webp', instructions: 'Where we dropping boys??', url: 'https://scratch.mit.edu/projects/294503728/embed' },
+
+            // Games from Screenshot 2
+            { id: 'funnyshooter', name: 'Goofy Ahh Shooter', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/funntshoOes.webp', instructions: 'Jayce was here', url: 'https://db.duckmath.org/html/goofy_ahh_shooter/index.html' },
+            { id: 'superfluff64', name: 'Super Fluff 64', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/supermario64.webp', instructions: 'Full credit to Nintento', url: 'https://db.duckmath.org/html/super_mario_64/index.html' },
+            { id: 'limitedcraft', name: 'Limited Craft: Spew14 Edition', category: 'casual', icon: 'https://static.fanbyte.com/uploads/2024/02/Infinite%20Craft%20Orange%20Complete.PNG', instructions: 'There are ony 100 things', url: 'https://db.duckmath.org/html/infinite_craft/index.html' },
+            { id: 'battlesim', name: 'Battle Sim', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/tabs.webp', instructions: 'You like make people fight like the Brett vs...nevermind', url: 'https://db.duckmath.org/html/totally_accurate_battle_simulator/index.html' },
+            { id: 'dogeminer', name: 'Doge Miner', category: 'casual', icon: 'https://www.dolldivine.com/images/doge-coin-miner-game.png', instructions: 'MINING CRYPTO TO KEEP MY FAMILY FEED', url: 'https://db.duckmath.org/html/doge_miner/index.html' },
+            { id: 'cs', name: 'CS Online', category: 'action', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/1.6.webp', instructions: 'I do have 10k hours in cs. JK', url: 'https://db.duckmath.org/html/cs_online/index.html' },
+            { id: 'slope', name: 'Slope: Spew14 Exclusive', category: 'racing', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/slope.webp', instructions: 'Wait a gosh dang darn minute I remember this g', url: 'https://db.duckmath.org/html/slope/index.html' },
+            { id: '99nights', name: '99 Nights in Loagers House', category: 'action', icon: 'https://tr.rbxcdn.com/180DAY-643b9b9285f3bd9b63cf392db12a4d87/768/432/Image/Webp/noFilter', instructions: '99 NIGHTS IN LOAGERS HOUSE', url: 'https://db.duckmath.org/html/99_nights/index.html' },
+            { id: 'idleants', name: 'Idle Ants', category: 'casual', icon: 'https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/d769fe608502e4f17192cf496d1a4b16.jpeg', instructions: 'You are an ant!', url: 'https://db.duckmath.org/html/idle_ants/index.html' },
+            { id: 'obbybike', name: 'Obby but Bike', category: 'racing', icon: 'https://play-lh.googleusercontent.com/YwxYsY3FW_zhGTZuYjt9MOpv48FKK190uYM4eyQojVCPLebosk2NALJc64arXDphjq7d', instructions: 'Wait from the blox, u', url: 'https://db.duckmath.org/html/obby_but_bike/index.html' },
+            { id: 'cheesechompers3d', name: 'Cheese Chompers 3D', category: 'racing', icon: 'https://sprunki.la/assets/img/games/other/cheese-chompers-3d/logo-square.jpeg', instructions: 'crazy cattle but for 2026', url: 'https://db.duckmath.org/html/cheese_chompers_3d/index.html' },
+            { id: 'pvsb', name: 'Plants vs Brainrots', category: 'action', icon: 'https://steal-brainrot.io/data/image/plants-vs-brainrots.jpg', instructions: 'Yo jandels new game. THIS IS BOOOOOOTY', url: 'https://db.duckmath.org/html/plants_vs_brainrots/index.html' },
+            { id: 'uno', name: 'Uno', category: 'casual', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/uno.webp', instructions: 'UNO OMG OMG', url: 'https://db.duckmath.org/html/uno/index.html' },
+            { id: 'cod', name: 'Cod Zombies', category: 'action', icon: 'https://img.itch.zone/aw1nLzE0ODIWTg2LmpwZWc=/347x500/HF1gj%2F.jpeg', instructions: 'yo bo3 like Baby Jayce loves that game and Terry', url: 'https://db.duckmath.org/html/cod_zombies/index.html' },
+            { id: 'ritlife', name: 'Ritlife', category: 'casual', icon: 'https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQMWgIRmr1_PK-JOKbABLVeo10-zfgcyrw2ncdJ006Vte91uo47Jc9uqU5ce3_V53nxsyzz', instructions: 'Live a life', url: 'https://db.duckmath.org/html/bitlife/index.html' },
+            { id: 'gta6', name: 'GTA6', category: 'action', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdYPKiYoltq3qJAT14qQHs4SDqnu5lc-YPBOn6K7sKuxry96_e_z9f20oCbw7BTRbtEZ0CN2JVc2Re0V3cHXU2rL_714CXGABG6lgsxB5uOhWY7CrR', instructions: 'GTA 6', url: 'https://db.duckmath.org/html/gta6/index.html' },
+            { id: 'puppetkiller', name: 'Puupet Killer', category: 'action', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdZ27xGXLFRT9aD3S94U1qSBvHJTS4YfUhhgifHRZZT-_L7MnKtFql8U_19NjGOfR7-C3u9QwawO0FVrTpAIji0AxMOnAlu', instructions: 'puupet killer', url: 'https://db.duckmath.org/html/puppet_killer/index.html' },
+            { id: 'statewars', name: 'State Wars', category: 'action', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdZxp2EwiKN0WNCFH7F12yYEpCIGLvkdGJPCsmbronHqGrLy_Kzq0jtLFPazHeZGBGzOsPlDtlxwiqFzbuH0z-0bg5ZulsDpdiIVPR', instructions: 'state wars', url: 'https://db.duckmath.org/html/state_wars/index.html' },
+            { id: 'paperio3', name: 'Paper Io 3', category: 'casual', icon: 'https://math-lessons-life.lol/lessons-img/lesson-3.webp', instructions: 'Paper io 3 is tuff', url: 'https://math-lessons-life.lol/lessons/lesson-3' },
+            { id: 'bitcoinclicker', name: 'Bitcoin Clicker', category: 'casual', icon: 'https://math-lessons-life.lol/lessons-img/lesson-25.webp', instructions: 'Click the bitcoin away', url: 'https://math-lessons-life.lol/lessons/lesson-25' },
+            { id: 'houseofbadstuff', name: 'House of Bad Stuff', category: 'action', icon: 'https://math-lessons-life.lol/lessons-img/lesson-86.webp', instructions: '2playergames.org', url: 'https://math-lessons-life.lol/lessons/lesson-86' },
+            { id: '3fluffs', name: '3 Fluffs', category: 'casual', icon: 'https://math-lessons-life.lol/lessons-img/lesson-327.webp', instructions: 'Why do 3 Fluffs cost 9 elixer??', url: 'https://math-lessons-life.lol/lessons/lesson-327' },
+            { id: 'aroria', name: 'Unblocker (beta)', category: 'casual', icon: 'https://i.ytimg.com/vi/qLRII0Xr6zI/maxresdefault.jpg', instructions: 'idk foager', url: 'https://gothing.vercel.app/' },
+            { id: 'cloudmoon', name: 'Cloudmoon', category: 'casual', icon: 'https://img.utdstc.com/icon/12d/349/12d349d1cd13cc225122ccd090b211e69c79a84c5216e55689f55f382235e423:200', instructions: 'go to the backup url so you can play cloud games', url: 'https://cloudmoon.com' }
+        ];
+
+        // State Variables
+        let currentUser = JSON.parse(localStorage.getItem('spew14_user')) || null;
+        let favorites = JSON.parse(localStorage.getItem('spew14_favorites')) || [];
+        let recents = JSON.parse(localStorage.getItem('spew14_recents')) || [];
+        let activeCategory = 'all';
+        let activeServer = null;
+        let currentGame = null;
+        let currentCanvasLoop = null;
+
+        let mockMessages = {
+            'General': [
+                { sender: 'System', text: 'Welcome to Spew14 General Chat!', time: '12:00 PM' },
+                { sender: 'Gamer99', text: 'Anyone wanna play Retro Bowl?', time: '12:02 PM' }
+            ],
+            'Gaming Hub': [{ sender: 'System', text: 'Discuss high scores here!', time: '12:00 PM' }],
+            'Memes & Chill': [{ sender: 'System', text: 'Keep it cool and funny!', time: '12:00 PM' }],
+            'Feedback': [{ sender: 'System', text: 'Leave your game suggestions here!', time: '12:00 PM' }]
+        };
+
+        // DOM Elements
         const gameGrid = document.getElementById('game-grid');
+        const searchInput = document.getElementById('search-input');
+        const actionButtons = document.getElementById('action-buttons');
         const gamePlayer = document.getElementById('game-player');
         const gameTitle = document.getElementById('game-title');
         const gameContainer = document.getElementById('game-container');
         const gameInstructions = document.getElementById('game-instructions');
         const closeGameBtn = document.getElementById('close-game');
-        const actionButtons = document.getElementById('action-buttons');
-        const favoritesBtn = document.getElementById('favorites-btn');
-        const toastNotification = document.getElementById('toast-notification');
-        const toastServerName = document.getElementById('toast-server-name');
-        
-        // Account UI
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const aboutBlankBtn = document.getElementById('about-blank-btn');
+        const randomGameBtn = document.getElementById('random-game-btn');
+
+        const quickPanicBtn = document.getElementById('quick-panic-btn');
+        const cloakModal = document.getElementById('cloak-modal');
+        const openCloakBtn = document.getElementById('open-cloak-btn');
+        const closeCloakBtn = document.getElementById('close-cloak-btn');
+
+        const toolsModal = document.getElementById('tools-modal');
+        const openToolsBtn = document.getElementById('open-tools-btn');
+        const closeToolsBtn = document.getElementById('close-tools-btn');
+
+        const messagingBtn = document.getElementById('messaging-btn');
+        const messagingView = document.getElementById('messaging-view');
+        const joinView = document.getElementById('join-view');
+        const chatView = document.getElementById('chat-view');
+        const serverList = document.getElementById('server-list');
+        const serverTitle = document.getElementById('server-title');
+        const chatMessages = document.getElementById('chat-messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const leaveServerBtn = document.getElementById('leave-server-btn');
+        const backToGamesBtn = document.getElementById('back-to-games-btn');
+
         const accountBtn = document.getElementById('account-btn');
         const accountView = document.getElementById('account-view');
         const loggedOutView = document.getElementById('logged-out-view');
         const loggedInView = document.getElementById('logged-in-view');
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
-        const userEmailSpan = document.getElementById('user-email');
+        const userDisplayNameSpan = document.getElementById('user-display-name');
         const logoutBtn = document.getElementById('logout-btn');
         const backToGamesFromAccountBtn = document.getElementById('back-to-games-from-account-btn');
 
-        // Messaging UI
-        const messagingBtn = document.getElementById('messaging-btn');
-        const notificationDot = document.getElementById('notification-dot');
-        const messagingView = document.getElementById('messaging-view');
-        const joinView = document.getElementById('join-view');
-        const chatView = document.getElementById('chat-view');
-        const serverListContainer = document.getElementById('server-list');
-        const backToGamesBtn = document.getElementById('back-to-games-btn');
-        const serverTitle = document.getElementById('server-title');
-        const leaveServerBtn = document.getElementById('leave-server-btn');
-        const chatMessages = document.getElementById('chat-messages');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
+        const verificationView = document.getElementById('verification-view');
+        const verifyEmailDisplay = document.getElementById('verify-email-display');
+        const demoCodeDisplay = document.getElementById('demo-code-display');
+        const verifyForm = document.getElementById('verify-form');
+        const verifyCodeInput = document.getElementById('verify-code-input');
+        const resendCodeBtn = document.getElementById('resend-code-btn');
+        const cancelVerifyBtn = document.getElementById('cancel-verify-btn');
 
-        // --- App State ---
-        let db, auth, userId, appId, userIsAnonymous;
-        let unsubscribeMessages = null;
-        let userFavorites = [];
-        let isShowingFavorites = false;
-        let notificationListeners = [];
-        let unreadServers = new Set();
-        let pageLoadTimestamp = Date.now();
-        let toastTimeout = null;
+        const customModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
 
-        // --- DATA DEFINITIONS ---
-        const games = [
-            { id: 'retrobowl', name: 'Retro Bowl', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/retro_bowl_icon.webp', instructions: 'i wish it was madden instead', url: 'https://db.duckmath.org/html/retro_bowl/index.html' },
-            { id: 'buckshotroulette', name: 'Buckshot Roulette', icon: 'https://i.ytimg.com/vi/hGIG6hKEHI0/hqdefault.jpg', instructions: 'Classic buckshot roulette.', url: 'https://db.duckmath.org/html/buckshot_roulette/index.html' },
-            { id: 'clashroyale', name: 'Clash Royale', icon: 'https://play-lh.googleusercontent.com/gnSC6s8-6Tjc4uhvDW7nfrSJxpbhllzYhgX8y374N1LYvWBStn2YhozS9XXaz1T_Pi2q', instructions: 'Use your mouse to dodge the incoming asteroids!', url: 'https://db.duckmath.org/html/clash_royale/index.html' },
-            { id: 'cc3d', name: 'Crazy Cattle 3d', icon: 'https://crazycattle3dgithub.io/data/image/crazy-cattle-3d-online.png', instructions: 'CC3D kinda tuff back in like may or somethin', url: 'https://db.duckmath.org/html/crazycattle3d/index.html' },
-            { id: 'twerkrace', name: 'Twerk Race 3d', icon: 'data:image/jpeg;base64,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 OdCe zAjgvHTbp1NSxr xVWpcUeesfWjW1g/QkTAgBACAEAICPy9YNfA9gHW9Jnebh43jmvRhK3RVVLls+w8OY4X7Th5Q57rtX1YzEldUfPbCSVIyOek3iFD1WQ9WXsZzkrabjyqA8QyOkUHE+QUd2Q3YkFZMl9zFsGhCZiL5DQd1t3ma+AXPZrW4qiprl4s6/IcN0dF1XvLwRZlVl8CAgsuWSjtYMHY8D+vtW6nLSxrkuZFraRLPktjxE0PxvoDiBsBXmna+htWx1KJkTLIGtLzg0Fx7AKn2LDdgld2KlkAGSWOuysr+3H8zgq6guKpfvLzGNU6LXXZfXcR3SlnBLFqbNZ2te8uEsmlgGioY0iovLiTj6g3q8w2CWJupXt7Dz5bg69WXSU43toVH/jXKVKCCDwd/uKxXo9hvzS96+RavLsT+XwZ5/xtlLDUQfhd/uJ/wDX8N1y96+Q/wCOxPyf/Z', instructions: 'ts a freaky ahh game', url: 'https://db.duckmath.org/html/twerk_race_3d/index.html' },
-            { id: 'spiralroll', name: 'Spiral Roll', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/spiralroll.webp', instructions: 'omg so satisfying', url: 'https://db.duckmath.org/html/spiral_roll/index.html' },
-            { id: 'stickmanhook', name: 'Stickman Hook', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/stickmanhook.webp', instructions: 'holy mobile game ahh', url: 'https://db.duckmath.org/html/stickman_hook/index.html' },
-            { id: 'ragdollarchers', name: 'Ragdoll Archers', icon: 'https://play-lh.googleusercontent.com/XMiWEMPbuq13oVcwYQ6ySLtZnBf7WpJ3rb7v-TM4MdFOvWfo1Z2hzSEAApRXzEcshjY', instructions: 'this game is so addicting', url: 'https://db.duckmath.org/html/ragdoll_archers/index.html' },
-            { id: 'stealbrainrot', name: 'Steal a Brainrot', icon: 'https://play-lh.googleusercontent.com/iR1JNfTr0W_fDN8zAfuZYPYHdVjI1UzNSVFkbAyXwN8e3jEuKsyu73zqjVdHDxNEfQqLhC78EaPzZPtWNL-X', instructions: 'ts is so corny but ik some of u like steal a brainrot', url: 'https://db.duckmath.org/html/steal_a_brainrot/index.html' },
-            { id: 'stuntcars', name: 'Madalin Stunt Cars 2', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/madalin.webp', instructions: 'ITS THE REAL BEAM.MG', url: 'https://db.duckmath.org/html/madalin_stunt_cars_2/index.html' },
-            { id: 'basketrandom', name: 'Basket Random', icon: 'https://scout.wgimager.com/f_webp/q_90/https://static.wgplayground.com/43105ae03bf75070f5e80a76bb59ac6e/wgplayground/c8a520f67cc563041d2a75bd8223939e.jpg', instructions: 'LEBROOOOOOOOOON', url: 'https://db.duckmath.org/html/basket_random/index.html' },
-            { id: 'sovietsniper', name: 'Soviet Sniper', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/cod.webp', instructions: 'not real call of duty', url: 'https://db.duckmath.org/html/soviet_sniper/index.html' },
-            { id: 'helixjump', name: 'Helix Jump', icon: 'https://play-lh.googleusercontent.com/FJ_eBYG23JkzujCEPHIjUAUJcQOGfZzPxKCGZ9lOmj9aBZABvdftqAAx8MyDbpEXeRzC', instructions: 'molbile game 2', url: 'https://db.duckmath.org/html/helix_jump/index.html' },
-            { id: 'ptrack', name: 'Poly Track', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/polytrack.webp', instructions: 'idk anything abt this game', url: 'https://db.duckmath.org/html/polytrack/index.html' },
-            { id: 'happywheels', name: 'Happy Wheels', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/happpywheels.webp', instructions: 'HAPPY WEHLS', url: 'https://db.duckmath.org/html/happy_wheels/index.html' },
-            { id: 'slowroads', name: 'Slow Roads.io', icon: 'https://old.slowroads.io/img.jpg', instructions: '1-877-KARSFORKIDS k a r s cars for kids', url: 'https://db.duckmath.org/html/slowroadsio/index.html' },
-            { id: 'granny', name: 'Granny', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/granny.webp', instructions: 'grannys house I dont wanna stay I dont wanna go', url: 'https://db.duckmath.org/html/granny/index.html' },
-            { id: '1v1', name: '1v1.lol', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/1v1.lol-old.webp', instructions: 'REAL FORTNITE', url: 'https://db.duckmath.org/html/1v1lol/index.html' },
-            { id: 'drivemad', name: 'Drive Mad', icon: 'https://play-lh.googleusercontent.com/V_egAxch0phxs10H_Z1QpWRrsH4phd8egT_5ZjYlFbXzXvwpUGpmJMn2h6HgbGkSlZSM', instructions: 'im mad because driving', url: 'https://db.duckmath.org/html/drive_mad/index.html' },
-            { id: 'gunspin', name: 'Gun Spin', icon: 'https://play-lh.googleusercontent.com/fLqvWSVq5rENEvu32xl0hf96wwSHVwQm-_9xc6KZg9Vgv9PbAtf1CyBYW7i1mlAXoSA', instructions: 'idek', url: 'https://db.duckmath.org/html/gun_spin/index.html' },
-            { id: 'subway', name: 'Subway Surfers', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/subway.webp', instructions: 'loagway soafers', url: 'https://db.duckmath.org/html/subway_surfers_barcelona/index.html' },
-            { id: 'bridgerace', name: 'Bridge Race', icon: 'https://play-lh.googleusercontent.com/ym7hOY7sjtsuZ-CR2tmvtsNEgPTkufUPKdaUKcNHOvJS3bf7CIxA7Eyc23FbnzziPsc', instructions: 'im racing the bridge loaging on my FOAGER FAOGER GFAOGER', url: 'https://db.duckmath.org/html/bridge_race/index.html' },
-            { id: 'fnaf2', name: 'Fnaf 2', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/fnaf2.webp', instructions: 'im pooping my pants so hard its too scary', url: 'https://db.duckmath.org/html/fnaf2/index.html' },
-            { id: 'holeio', name: 'Hole.io', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/hole.io.webp', instructions: 'no ads UNLIKE MOBILE GAMES', url: 'https://db.duckmath.org/html/holeio/index.html' },
-            { id: 'geodash', name: 'Geometry Dash', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/geometrydash.webp', instructions: 'sorry its on scratch', url: 'https://scratch.mit.edu/projects/105500895/embed' },
-            { id: 'solarsmash', name: 'Solar Smash', icon: 'https://play-lh.googleusercontent.com/X-4jN5PyZqa8YMEQoGSDhgxNGbzvoQT5tiArPZ_6RqD77SQ_gC0LdZpYb2cplO0XNGY=w526-h296-rw', instructions: 'knockoff universe sandbox', url: 'https://db.duckmath.org/html/solar_smash/index.html' },
-            { id: 'minecraft', name: 'Minecraft', icon: 'data:image/png;base64,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', instructions: 'the real minecraft', url: 'https://db.duckmath.org/html/minecraft/index.html' },
-            { id: 'rgdllhit', name: 'Ragdoll Hit', icon: 'https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=314,height=314,fit=cover,f=auto/3c892779be9dabb3589586c83ad3eeed/ragdoll-hit.png', instructions: 'RAGDOLL HIT i like this better than the other one', url: 'https://mageedu23.github.io/g50/class-12' },
-            { id: 'pplplygrnd', name: 'People Playground', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_foljdagp_EXGmuFH1-9hm3li-58BZssX9A&s', instructions: 'ppl playground but im sad bc no mods', url: 'https://1games.io/game/ragdoll-playground/' },
-            { id: 'ttshots', name: 'Tap Tap Shots', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/406/responsive/tap-tap-shots-512-xs.jpg', instructions: 'gren ben', url: '/games/2023/q/1/tap-tap-shots/index.html' },
-            { id: 'paperio2', name: 'PAPER IO SO TUFF', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTeBdhYvBzbipaeEDLMKVTjqpEvw_qcoaujQ&s', instructions: 'fart', url: 'https://eus.rubiconproject.com/usync.html' },
-            { id: 'templeruntwo', name: 'Temple Run 2', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpOVgPWZY1nST2Hh4h0osetTpjiC4XJhDaPQ&s', instructions: 'loager moblie game 3', url: 'https://games.poki.com/458768/84938be4-42ce-42a8-9968-2f5f2a7618d8?tag=pg-d1e184892bab9bc50453d668a9e838fae0030a46&amp;site_id=3&amp;iso_lang=en&amp;country=US&amp;poki_url=https://poki.com/en/g/temple-run-2&amp;hoist=yes&amp;nonPersonalized=n&amp;cloudsavegames=n&amp;familyFriendly=n&amp;categories=3,4,6,9,93,903,929,1103,1137,1140,1147,1163,1190&amp;special_condition=landing' },
-            { id: 'idleminer', name: 'Idle Mining Empire', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/372/responsive/idle-mining-empire-512-xs.jpg', instructions: 'Mine like minecraft', url: 'https://unblocked-games.s3.amazonaws.com/games/2023/mjs/idle-mining-empire/index.html' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: 'driftboss', name: 'Drift Boss', icon: 'https://www.hoodamath.com/large/1024/driftboss_1024.png', instructions: 'Drift to the loge', url: 'https://www.hoodamath.com/mobile/games/drift-boss/game.html?nocheckorient=1' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: 'stickmanragdoll', name: 'Stickman Ragdoll', icon: 'https://unblocked-games.s3.amazonaws.com/media/posts/57/responsive/stickman-xs.jpg', instructions: 'War Crimes', url: 'https://unblocked-games.s3.amazonaws.com/games/stickman-ragdoll/unblocked.html' },
-            { id: 'fortnite', name: 'Fort Night', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/fortnite.webp', instructions: 'Where we dropping boys??', url: 'https://scratch.mit.edu/projects/453281308/embed/' },
-            { id: 'growagarden', name: 'Grow a Garden', icon: 'https://assets.gam3s.gg/Grow_a_Garden_Cover_f2ac39f8ce.webp', instructions: 'dis game dead like my brain', url: 'https://db.duckmath.org/html/growden_io/index.html' },
-            { id: 'funnyshooter', name: 'Goofy Ahh Shooter', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/funntshooes.webp', instructions: 'Jayce was here', url: 'https://db.duckmath.org/html/funny_shooter_2/index.html' },
-            { id: 'superfluff64', name: 'Super Fluff 64', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/supermario64.webp', instructions: 'Full credit to Nintento', url: 'https://db.duckmath.org/html/super_mario_64/index.html' },
-            { id: 'limitedcraft', name: 'Limited Craft: Spew14 Edition', icon: 'https://static.fanbyte.com/uploads/2024/02/Infinite%20Craft%20Orange%20Complete.PNG', instructions: 'There are ony 100 things you can make. fr fr', url: 'https://db.duckmath.org/html/nova_craft/index.html' },
-            { id: 'battlesim', name: 'Battle Sim', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/tabs.webp', instructions: 'You like make people fight like the Brett vs...nevermind', url: 'https://db.duckmath.org/html/battle_simulator/index.html' },
-            { id: 'dogeminer', name: 'Doge Miner', icon: 'https://www.dolldivine.com/images/doge-coin-miner-game.png', instructions: 'MINING CRYPTO TO KEEP MY FAMILY FEED', url: 'https://db.duckmath.org/html/doge_miner/index.html' },
-            { id: 'cs', name: 'CS Online', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/1.6.webp', instructions: 'I do have 10k hours in cs. JK', url: 'https://db.duckmath.org/html/cs_online/index.html' },
-            { id: 'slope', name: 'Slope: Spew14 Exclusive', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/slope.webp', instructions: 'Wait a gosh dang darn minute I remember this game from a dif spew', url: 'https://db.duckmath.org/html/slope/index.html' },
-            { id: '99nights', name: '99 Nights in Loagers House', icon: 'https://tr.rbxcdn.com/180DAY-643b9b9285f3bd9b63cf392db12a4d87/768/432/Image/Webp/noFilter', instructions: '99 NIGHTS IN LOAGERS HOUSE AHHHHHHHH', url: 'https://db.duckmath.org/html/99_nights_in_the_forest/index.html' },
-            { id: 'idleants', name: 'Idle Ants', icon: 'https://img.poki-cdn.com/cdn-cgi/image/quality=78,width=314,height=314,fit=cover,f=auto/d769fe608502e4f17192cf496d1a4b16.jpeg', instructions: 'You are the ant', url: 'https://db.duckmath.org/html/idle_ants/index.html' },
-            { id: 'obbybike', name: 'Obby but Bike', icon: 'https://play-lh.googleusercontent.com/YwxYsY3FW_zhGTZuYjT9MOpv48FKKl90uyM4eyqOjVCPLEbosk2NALJc64arXdPhjq7d', instructions: 'Wait from the blox', url: 'https://db.duckmath.org/html/obby_but_youre_on_a_bike/index.html' },
-            { id: 'cheesechompers3d', name: 'Cheese Chompers 3D', icon: 'https://sprunki.la/assets/img/games/other-cheese-chompers-3d/logo-square.jpeg', instructions: 'crazy cattle but for 2026', url: 'https://db.duckmath.org/html/cheese_chompers_3d/index.html' },
-            { id: 'pvsb', name: 'PLants vs Brainrots', icon: 'https://steal-brainrot.io/data/image/plants-vs-brainrots.jpg', instructions: 'Yo jandels new game. THIS IS BOOOOOOTY', url: 'https://db.duckmath.org/html/plants_vs_brainrots/index.html' },
-            { id: 'uno', name: 'Uno', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/uno.webp', instructions: 'UNO OMG OMG', url: 'https://db.duckmath.org/html/uno/index.html' },
-            { id: 'cod', name: 'Cod Zombies', icon: 'https://img.itch.zone/aW1nLzE1ODIwNTg2LmpwZWc=/347x500/HFlGj%2F.jpeg', instructions: 'yo bo3 like Baby Jayce loves that game and Terry', url: 'https://db.duckmath.org/html/cod_zombies_portable/index.html' },
-            { id: 'ritlife', name: 'RitLife', icon: 'https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQMWgIRmr1_PK-JOKBAbLveo1O-zfgcyrw2ncdJ006Vte91uo47Jc9uqU5ce3_V53nxsyzZ', instructions: 'Live a life you will remember', url: 'https://db.duck.theducklair.com/html/bitlife/index.html' },
-            { id: 'gta6', name: 'GTA6', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdYPkiYoltq3qjATl4qQHs45Dqnu5lc-YPBOn6K7sKuxrY96_e_Z9f20oCbw7BtRBtEZ0CN2JVc2ReOV3cHXU2rL_714CXGABG6lgsxB5uOhWY7CrR5coi8B2xPQmXK_Adxw690RpM3zoEAVMWdvJN0ib3IkX1apU80UG7dPyc4j7jHROn5L-D3mBnE=w1280', instructions: 'GTA6 on spew14 before GTA6', url: 'https://dnrweqffuwjtx.cloudfront.net/games/2024/unity3/stickman-gta-city/index.html' },
-            { id: 'puppetkiller', name: 'Puupet Killer', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdZ27xGXLFrt9aD3DS94U1QsB3VHJTS4YfUHghifHRZZT-_L7MnKtfql8U_l9NjGofR7-C3u9qWawOOFVrTpAiJi0AxMOnAludcpgYGMU3l1xmjrhGNL74oHQcOg6Nk90sfxuPnFeasnV77mC4fsliRQgU8Qgr31fwUDv8nAWLOHDhTeQe0ecnmbidHBWUMXsv-_pF6rbDqhJeZt7DTffRmva4OwZ1B3k2I0Llc=w1280', instructions: 'kill da puppet', url: 'https://unblocked-games.s3.amazonaws.com/games/puppet-killer/unblocked.html' },
-            { id: 'statewars', name: 'State Wars', icon: 'https://lh3.googleusercontent.com/sitesv/AICyYdZxP2EwIkN0WNCFLH7F12yYEpCIGLvkdGJPCsmbronHqGrLy_Kzq0jtLfPazHeZGBGzOsPlDtlxwiqFzbuH0z-0bg5ZulsDpdIiVPRe7P9WVl3wmrRfLlLI9UgHv891rDSAuMZfcKDVUw8TEJ8Ppov83oCt_TfAtTFCjLe6IH9Kb_0MRBIbvNwum_NcCzzfQSidkvlrSwT3-l6VO1PR4Kw5tXAfBl_V8xxC=w1280', instructions: 'WAR AHHHHHHHH', url: 'https://dnrweqffuwjtx.cloudfront.net/games/2024/construct/233/state-io-wars/index.html' },
-            { id: 'paperio3', name: 'Paper Io 3', icon: 'https://math-lessons-life.lol/lessons-img/lesson-3.webp', instructions: 'Paper io 3 is tuff', url: 'https://math-lessons-life.lol/lessons/lesson-3' },
-            { id: 'bitcoinclicker', name: 'Bitcoin Clicker', icon: 'https://math-lessons-life.lol/lessons-img/lesson-25.webp', instructions: 'Click the bitcoin away', url: 'src="https://math-lessons-life.lol/lessons/lesson-25"' },
-            { id: 'houseofbadstuff', name: 'House of Bad Stuff', icon: 'https://math-lessons-life.lol/lessons-img/lesson-86.webp', instructions: '2playergames.org', url: 'https://math-lessons-life.lol/lessons/lesson-86' },
-            { id: '3fluffs', name: '3 Fluffs', icon: 'https://math-lessons-life.lol/lessons-img/lesson-327.webp', instructions: 'Why do 3 Fluffs cost 9 elixer??', url: 'https://math-lessons-life.lol/lessons/lesson-327' },
-            { id: 'aroria', name: 'Unblocker (beta)', icon: 'https://i.ytimg.com/vi/QlRII0Xr6zI/maxresdefault.jpg', instructions: 'idk foager', url: 'https://gothing.vercel.app/' },
-            { id: 'cloudmoon', name: 'Cloudmoon', icon: 'https://img.utdstc.com/icon/12d/349/12d349d1cd13cc225122ccd090b211e69c79a84c5216e55689f55f382235e423:200', instructions: 'go to the backup url so you can actually use the site', url: 'https://web.cloudmoonapp.com/' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            { id: '', name: '', icon: '', instructions: '', url: '' },
-            
-            
-            
+        // Stealth / Panic Handlers
+        function executePanic() {
+            window.location.href = "https://classroom.google.com";
+        }
 
-            
-            
-        ];
-        const servers = [ 'chat place', 'loagers', 'in the middle of class or smth', 'sheeeeeeet', 'shoaging chat (NO FOAGERS)' ];
+        quickPanicBtn.addEventListener('click', executePanic);
 
-        // --- Firebase Initialization & Auth Handling ---
-        async function initFirebase() {
-            try {
-                // This is where you paste your Firebase config object.
-                const firebaseConfig = {
-                  apiKey: "AIzaSyCIx3ShvoVQBDBhCvOirjMFOpXXw2sgzLU",
-                  authDomain: "spew14-90110.firebaseapp.com",
-                  projectId: "spew14-90110",
-                  storageBucket: "spew14-90110.firebasestorage.app",
-                  messagingSenderId: "734062659575",
-                  appId: "1:734062659575:web:c09eff4483980bf78a10f2",
-                  measurementId: "G-MN035BGBKB"
-                };
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' || e.key === '`' || e.key === '~') {
+                executePanic();
+            }
+        });
 
-                // A basic check to see if the config is empty
-                if (!firebaseConfig.apiKey) {
-                     console.warn("Firebase config is not set. Please add your Firebase project's web app configuration to the `firebaseConfig` object in the script.");
-                     // Disable features that require Firebase and inform the user
-                     messagingBtn.disabled = true;
-                     accountBtn.disabled = true;
-                     messagingBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                     accountBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                     messagingBtn.title = "Firebase is not configured.";
-                     accountBtn.title = "Firebase is not configured.";
-                     return; // Stop execution if firebase is not configured
+        // Tab Cloaking Logic
+        openCloakBtn.addEventListener('click', () => cloakModal.classList.remove('hidden'));
+        closeCloakBtn.addEventListener('click', () => cloakModal.classList.add('hidden'));
+
+        const cloakPresets = {
+            classroom: { title: 'Classes', icon: 'https://ssl.gstatic.com/classroom/favicon.png' },
+            docs: { title: 'Google Docs', icon: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico' },
+            drive: { title: 'My Drive - Google Drive', icon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
+            canvas: { title: 'Dashboard', icon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e80d23821a.ico' },
+            reset: { title: 'Spew14 Unblocked Games', icon: 'https://raw.githubusercontent.com/duckmath/icons/refs/heads/main/retro_bowl_icon.webp' }
+        };
+
+        document.querySelectorAll('.cloak-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.dataset.cloak;
+                const preset = cloakPresets[key];
+                if (preset) {
+                    document.getElementById('page-title').textContent = preset.title;
+                    document.getElementById('page-favicon').href = preset.icon;
+                    showModal(`Tab cloaked as "${preset.title}"!`, "Cloak Activated");
+                    cloakModal.classList.add('hidden');
                 }
+            });
+        });
 
-                appId = firebaseConfig.projectId; // Use projectId as the appId
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+        // Classroom Utilities
+        openToolsBtn.addEventListener('click', () => toolsModal.classList.remove('hidden'));
+        closeToolsBtn.addEventListener('click', () => toolsModal.classList.add('hidden'));
 
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userIsAnonymous = user.isAnonymous;
-                        if (!user.isAnonymous) {
-                            updateAccountUI(user);
-                            await loadFavorites();
-                            favoritesBtn.classList.remove('hidden');
-                        } else {
-                            updateAccountUI(null);
-                            userFavorites = [];
-                            favoritesBtn.classList.add('hidden');
-                        }
-                         // Setup notifications regardless of user type
-                        setupNotificationListeners();
-                    } else {
-                        userId = null;
-                        userIsAnonymous = true;
-                        updateAccountUI(null);
-                        userFavorites = [];
-                        favoritesBtn.classList.add('hidden');
-                        await signInAnonymously(auth);
-                    }
-                    updateFavoritesUI();
-                });
+        // Utility Tabs Switcher
+        const tabCalcBtn = document.getElementById('tab-calc-btn');
+        const tabNotesBtn = document.getElementById('tab-notes-btn');
+        const tabTimerBtn = document.getElementById('tab-timer-btn');
 
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                alert("Could not connect to core services. Ensure your Firebase config is correct.");
+        const calcPanel = document.getElementById('tool-calc-panel');
+        const notesPanel = document.getElementById('tool-notes-panel');
+        const timerPanel = document.getElementById('tool-timer-panel');
+
+        function switchToolTab(activeTab) {
+            [tabCalcBtn, tabNotesBtn, tabTimerBtn].forEach(b => {
+                b.classList.remove('border-purple-500', 'text-purple-400');
+                b.classList.add('border-transparent', 'text-slate-400');
+            });
+            [calcPanel, notesPanel, timerPanel].forEach(p => p.classList.add('hidden'));
+
+            if (activeTab === 'calc') {
+                tabCalcBtn.classList.add('border-purple-500', 'text-purple-400');
+                calcPanel.classList.remove('hidden');
+            } else if (activeTab === 'notes') {
+                tabNotesBtn.classList.add('border-purple-500', 'text-purple-400');
+                notesPanel.classList.remove('hidden');
+            } else if (activeTab === 'timer') {
+                tabTimerBtn.classList.add('border-purple-500', 'text-purple-400');
+                timerPanel.classList.remove('hidden');
             }
         }
-        
-        // --- UI Navigation ---
-        function showGameGrid() {
-            gameGrid.classList.remove('hidden');
-            actionButtons.classList.remove('hidden');
-            
-            gamePlayer.classList.add('hidden');
-            messagingView.classList.add('hidden');
-            accountView.classList.add('hidden');
-            
-            leaveChat(); 
-            
-            isShowingFavorites = false;
-            favoritesBtn.textContent = 'Favorites';
-            document.querySelectorAll('.game-card').forEach(card => card.classList.remove('hidden'));
+
+        tabCalcBtn.addEventListener('click', () => switchToolTab('calc'));
+        tabNotesBtn.addEventListener('click', () => switchToolTab('notes'));
+        tabTimerBtn.addEventListener('click', () => switchToolTab('timer'));
+
+        // Calculator Logic
+        const calcDisplay = document.getElementById('calc-display');
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.val;
+                if (val === 'C') {
+                    calcDisplay.value = '0';
+                } else if (val === '=') {
+                    try {
+                        calcDisplay.value = eval(calcDisplay.value.replace(/×/g, '*').replace(/÷/g, '/')) || '0';
+                    } catch (err) {
+                        calcDisplay.value = 'Error';
+                    }
+                } else {
+                    if (calcDisplay.value === '0' || calcDisplay.value === 'Error') {
+                        calcDisplay.value = val;
+                    } else {
+                        calcDisplay.value += val;
+                    }
+                }
+            });
+        });
+
+        // Notes Auto-Save
+        const notesInput = document.getElementById('class-notes-input');
+        notesInput.value = localStorage.getItem('spew14_class_notes') || '';
+        notesInput.addEventListener('input', () => {
+            localStorage.setItem('spew14_class_notes', notesInput.value);
+        });
+        document.getElementById('clear-notes-btn').addEventListener('click', () => {
+            notesInput.value = '';
+            localStorage.removeItem('spew14_class_notes');
+        });
+
+        // Pomodoro Timer
+        let timerInterval = null;
+        let timerSeconds = 25 * 60;
+        const timerDisplay = document.getElementById('timer-display');
+        const timerStartBtn = document.getElementById('timer-start-btn');
+
+        function updateTimerUI() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
         }
 
-        function showMessagingView() {
+        timerStartBtn.addEventListener('click', () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerStartBtn.textContent = 'Resume Focus';
+            } else {
+                timerStartBtn.textContent = 'Pause';
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerUI();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        showModal("Pomodoro focus session completed! Time for a break.", "Timer Alert");
+                        timerStartBtn.textContent = 'Start Focus';
+                        timerSeconds = 25 * 60;
+                        updateTimerUI();
+                    }
+                }, 1000);
+            }
+        });
+
+        document.getElementById('timer-reset-btn').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 25 * 60;
+            updateTimerUI();
+            timerStartBtn.textContent = 'Start Focus';
+        });
+
+        // Backup / Import Save Data
+        document.getElementById('export-data-btn').addEventListener('click', () => {
+            const data = {
+                user: currentUser,
+                favorites: favorites,
+                recents: recents,
+                notes: notesInput.value
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'spew14_backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('import-data-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (parsed.user) localStorage.setItem('spew14_user', JSON.stringify(parsed.user));
+                    if (parsed.favorites) localStorage.setItem('spew14_favorites', JSON.stringify(parsed.favorites));
+                    if (parsed.recents) localStorage.setItem('spew14_recents', JSON.stringify(parsed.recents));
+                    if (parsed.notes) localStorage.setItem('spew14_class_notes', parsed.notes);
+
+                    currentUser = parsed.user || currentUser;
+                    favorites = parsed.favorites || favorites;
+                    recents = parsed.recents || recents;
+                    notesInput.value = parsed.notes || '';
+
+                    showModal("Backup restored successfully!", "Data Imported");
+                    renderGames();
+                    renderRecents();
+                } catch (err) {
+                    showModal("Invalid save file format.", "Error");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Built-In Offline Canvas Games Generator
+        function startBuiltInGame(type) {
+            if (currentCanvasLoop) cancelAnimationFrame(currentCanvasLoop);
+            gameContainer.innerHTML = `<canvas id="builtin-canvas" width="600" height="400" class="w-full h-full bg-slate-950"></canvas>`;
+            const canvas = document.getElementById('builtin-canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'snake') {
+                let snake = [{x: 10, y: 10}];
+                let food = {x: 15, y: 15};
+                let dx = 1, dy = 0;
+                let score = 0;
+                let gridSize = 20;
+                let tileCount = 20;
+
+                function gameLoop() {
+                    let head = {x: snake[0].x + dx, y: snake[0].y + dy};
+                    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || snake.some(s => s.x === head.x && s.y === head.y)) {
+                        snake = [{x: 10, y: 10}];
+                        dx = 1; dy = 0;
+                        score = 0;
+                    } else {
+                        snake.unshift(head);
+                        if (head.x === food.x && head.y === food.y) {
+                            score += 10;
+                            food = {x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount)};
+                        } else {
+                            snake.pop();
+                        }
+                    }
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw Food
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(food.x * gridSize + 10, food.y * gridSize + 10, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw Snake
+                    snake.forEach((part, index) => {
+                        ctx.fillStyle = index === 0 ? '#10b981' : '#34d399';
+                        ctx.fillRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                    });
+
+                    // Draw Score
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '14px "Press Start 2P", monospace';
+                    ctx.fillText(`SCORE: ${score}`, 15, 30);
+
+                    setTimeout(() => {
+                        currentCanvasLoop = requestAnimationFrame(gameLoop);
+                    }, 90);
+                }
+
+                window.onkeydown = (e) => {
+                    if (['ArrowUp', 'w', 'W'].includes(e.key) && dy === 0) { dx = 0; dy = -1; }
+                    if (['ArrowDown', 's', 'S'].includes(e.key) && dy === 0) { dx = 0; dy = 1; }
+                    if (['ArrowLeft', 'a', 'A'].includes(e.key) && dx === 0) { dx = -1; dy = 0; }
+                    if (['ArrowRight', 'd', 'D'].includes(e.key) && dx === 0) { dx = 1; dy = 0; }
+                };
+                gameLoop();
+            } else if (type === 'flappy') {
+                let birdY = 200, velocity = 0, gravity = 0.4;
+                let pipes = [], score = 0, frame = 0;
+
+                function gameLoop() {
+                    frame++;
+                    velocity += gravity;
+                    birdY += velocity;
+
+                    if (frame % 90 === 0) {
+                        let topH = Math.floor(Math.random() * 180) + 40;
+                        pipes.push({ x: 600, top: topH, bottom: topH + 110, passed: false });
+                    }
+
+                    pipes.forEach(p => p.x -= 2.5);
+                    pipes = pipes.filter(p => p.x > -60);
+
+                    // Collision check
+                    if (birdY > 380 || birdY < 0) {
+                        birdY = 200; velocity = 0; pipes = []; score = 0;
+                    }
+
+                    pipes.forEach(p => {
+                        if (p.x < 120 && p.x > 70) {
+                            if (birdY < p.top || birdY > p.bottom) {
+                                birdY = 200; velocity = 0; pipes = []; score = 0;
+                            }
+                        }
+                        if (p.x < 70 && !p.passed) {
+                            p.passed = true; score += 1;
+                        }
+                    });
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw Pipes
+                    ctx.fillStyle = '#10b981';
+                    pipes.forEach(p => {
+                        ctx.fillRect(p.x, 0, 50, p.top);
+                        ctx.fillRect(p.x, p.bottom, 50, canvas.height - p.bottom);
+                    });
+
+                    // Draw Bird
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(100, birdY, 12, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Score
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '14px "Press Start 2P", monospace';
+                    ctx.fillText(`SCORE: ${score}`, 15, 30);
+
+                    currentCanvasLoop = requestAnimationFrame(gameLoop);
+                }
+
+                window.onkeydown = (e) => { if (e.code === 'Space') velocity = -7.5; };
+                canvas.onclick = () => velocity = -7.5;
+                gameLoop();
+            } else if (type === 'breakout') {
+                let paddleX = 250, paddleW = 90;
+                let ballX = 300, ballY = 300, dx = 3, dy = -3;
+                let bricks = [], score = 0;
+
+                for (let r = 0; r < 4; r++) {
+                    for (let c = 0; c < 7; c++) {
+                        bricks.push({ x: c * 80 + 20, y: r * 25 + 40, active: true });
+                    }
+                }
+
+                function gameLoop() {
+                    ballX += dx; ballY += dy;
+
+                    if (ballX < 10 || ballX > 590) dx = -dx;
+                    if (ballY < 10) dy = -dy;
+                    if (ballY > 390) {
+                        ballX = 300; ballY = 300; dx = 3; dy = -3; score = 0;
+                        bricks.forEach(b => b.active = true);
+                    }
+
+                    // Paddle collision
+                    if (ballY >= 350 && ballY <= 365 && ballX >= paddleX && ballX <= paddleX + paddleW) {
+                        dy = -Math.abs(dy);
+                    }
+
+                    // Brick collision
+                    bricks.forEach(b => {
+                        if (b.active && ballX > b.x && ballX < b.x + 70 && ballY > b.y && ballY < b.y + 20) {
+                            b.active = false; dy = -dy; score += 10;
+                        }
+                    });
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw Bricks
+                    bricks.forEach(b => {
+                        if (b.active) {
+                            ctx.fillStyle = '#8b5cf6';
+                            ctx.fillRect(b.x, b.y, 70, 18);
+                        }
+                    });
+
+                    // Draw Paddle
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillRect(paddleX, 355, paddleW, 12);
+
+                    // Draw Ball
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(ballX, ballY, 7, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw Score
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '14px "Press Start 2P", monospace';
+                    ctx.fillText(`SCORE: ${score}`, 15, 25);
+
+                    currentCanvasLoop = requestAnimationFrame(gameLoop);
+                }
+
+                canvas.onmousemove = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    paddleX = e.clientX - rect.left - paddleW / 2;
+                };
+                gameLoop();
+            }
+        }
+
+        // Modal Handlers
+        function showModal(msg, title = "Notice") {
+            modalTitle.textContent = title;
+            modalMessage.textContent = msg;
+            customModal.classList.remove('hidden');
+        }
+
+        modalCloseBtn.addEventListener('click', () => customModal.classList.add('hidden'));
+
+        function checkAuth(actionName = "access this feature") {
+            if (!currentUser) {
+                showModal(`Account Required! Please create an account or log in to ${actionName}.`, "Access Restricted");
+                openAccountView();
+                return false;
+            }
+            if (!currentUser.isVerified) {
+                showModal(`Email Verification Required! Please verify your email to ${actionName}.`, "Verification Needed");
+                openAccountView();
+                return false;
+            }
+            return true;
+        }
+
+        function openAccountView() {
             gameGrid.classList.add('hidden');
             actionButtons.classList.add('hidden');
-            messagingView.classList.remove('hidden');
-            joinView.classList.remove('hidden');
-            chatView.classList.add('hidden');
+            gamePlayer.classList.add('hidden');
+            messagingView.classList.add('hidden');
+            accountView.classList.remove('hidden');
+            updateAccountUI();
         }
 
-        function showAccountView() {
-             gameGrid.classList.add('hidden');
-             actionButtons.classList.add('hidden');
-             messagingView.classList.add('hidden');
-             accountView.classList.remove('hidden');
-        }
+        // Category Pill Filter
+        document.querySelectorAll('.cat-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cat-pill').forEach(b => {
+                    b.classList.remove('active', 'bg-purple-600', 'text-white');
+                    b.classList.add('bg-slate-800', 'text-slate-300');
+                });
+                btn.classList.add('active', 'bg-purple-600', 'text-white');
+                btn.classList.remove('bg-slate-800', 'text-slate-300');
+                activeCategory = btn.dataset.cat;
+                renderGames(searchInput.value);
+            });
+        });
 
-        // --- CORE APP LOGIC ---
-        function createGameCards() {
+        // Game Grid Rendering
+        function renderGames(filterText = '') {
             gameGrid.innerHTML = '';
-            games.filter(game => game.id).forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'game-card bg-gray-800 rounded-lg p-4 cursor-pointer transform hover:scale-105 hover:bg-gray-700 transition duration-300 ease-in-out flex flex-col';
-                card.dataset.gameId = game.id;
-                
-                card.innerHTML = `
-                    <span class="favorite-star" data-game-id="${game.id}">&#9734;</span>
-                    <div class="w-full aspect-square rounded-md overflow-hidden mb-3">
-                         <img src="${game.icon}" alt="${game.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/300x300/1a202c/ffffff?text=Error';">
+            const query = filterText.toLowerCase().trim();
+
+            const filteredGames = games.filter(g => {
+                const matchesSearch = g.name.toLowerCase().includes(query);
+                let matchesCategory = true;
+
+                if (activeCategory === 'favorites') {
+                    matchesCategory = favorites.includes(g.id);
+                } else if (activeCategory !== 'all') {
+                    matchesCategory = g.category === activeCategory;
+                }
+
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filteredGames.length === 0) {
+                gameGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-400">
+                        <i class="fa-solid fa-ghost text-3xl mb-2 text-slate-600"></i>
+                        <p class="text-sm">No games found in this category.</p>
                     </div>
-                    <h3 class="font-semibold text-base text-center truncate mt-auto">${game.name}</h3>
+                `;
+                return;
+            }
+
+            filteredGames.forEach(game => {
+                const isFav = favorites.includes(game.id);
+                const card = document.createElement('div');
+                card.className = "bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700/80 hover:border-purple-500 transition duration-200 flex flex-col group cursor-pointer relative";
+
+                const fallbackUrl = `https://placehold.co/300x300/1e293b/a855f7?text=${encodeURIComponent(game.name)}`;
+
+                card.innerHTML = `
+                    <div class="relative w-full aspect-square bg-slate-900 overflow-hidden">
+                        <img src="${game.icon}" alt="${game.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='${fallbackUrl}';">
+                        <span class="favorite-star ${isFav ? 'favorited' : ''}" data-id="${game.id}">
+                            ${isFav ? '★' : '☆'}
+                        </span>
+                        ${game.builtIn ? `<span class="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur">OFFLINE</span>` : ''}
+                    </div>
+                    <div class="p-3 text-center flex-grow flex flex-col justify-center bg-slate-800">
+                        <h3 class="font-bold text-xs sm:text-sm text-slate-100 truncate group-hover:text-purple-400 transition">${game.name}</h3>
+                    </div>
                 `;
 
-                card.querySelector('img').parentElement.addEventListener('click', () => launchGame(game.id));
-                card.querySelector('h3').addEventListener('click', () => launchGame(game.id));
                 card.querySelector('.favorite-star').addEventListener('click', (e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     toggleFavorite(game.id);
+                });
+
+                card.addEventListener('click', () => {
+                    launchGame(game.id);
                 });
 
                 gameGrid.appendChild(card);
             });
-            updateFavoritesUI();
         }
 
+        function toggleFavorite(id) {
+            if (!checkAuth("save favorite games")) return;
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(f => f !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('spew14_favorites', JSON.stringify(favorites));
+            renderGames(searchInput.value);
+        }
+
+        // Render Recently Played Bar
+        function renderRecents() {
+            const container = document.getElementById('recent-container');
+            const grid = document.getElementById('recent-grid');
+            grid.innerHTML = '';
+
+            if (recents.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            recents.slice(0, 6).forEach(id => {
+                const g = games.find(item => item.id === id);
+                if (!g) return;
+                const badge = document.createElement('button');
+                badge.className = "flex items-center gap-2 bg-slate-700/70 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap transition border border-slate-600/60";
+                badge.innerHTML = `<img src="${g.icon}" class="w-4 h-4 rounded object-cover"> <span>${g.name}</span>`;
+                badge.onclick = () => launchGame(g.id);
+                grid.appendChild(badge);
+            });
+        }
+
+        function addRecent(id) {
+            recents = [id, ...recents.filter(r => r !== id)].slice(0, 8);
+            localStorage.setItem('spew14_recents', JSON.stringify(recents));
+            renderRecents();
+        }
+
+        searchInput.addEventListener('input', (e) => renderGames(e.target.value));
+
+        // Random Game Trigger
+        randomGameBtn.addEventListener('click', () => {
+            const pick = games[Math.floor(Math.random() * games.length)];
+            launchGame(pick.id);
+        });
+
+        // Launch Game
         function launchGame(gameId) {
+            if (!checkAuth("play games")) return;
+
             const game = games.find(g => g.id === gameId);
             if (!game) return;
 
+            currentGame = game;
+            addRecent(game.id);
+
             gameGrid.classList.add('hidden');
             actionButtons.classList.add('hidden');
+            messagingView.classList.add('hidden');
+            accountView.classList.add('hidden');
             gamePlayer.classList.remove('hidden');
-            
-            gameTitle.textContent = game.name;
-            gameInstructions.textContent = game.instructions;
-            gameContainer.innerHTML = ''; 
 
-            if (game.url) {
+            gameTitle.textContent = game.name;
+            gameInstructions.textContent = game.instructions || "Enjoy the game!";
+
+            gameContainer.innerHTML = '';
+
+            if (game.builtIn) {
+                startBuiltInGame(game.builtIn);
+            } else {
                 const iframe = document.createElement('iframe');
                 iframe.className = "w-full h-full border-0";
                 iframe.src = game.url;
-                iframe.allowFullscreen = true;
+                iframe.allow = "fullscreen; autoplay";
                 iframe.setAttribute('sandbox', 'allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-scripts allow-same-origin allow-downloads');
                 gameContainer.appendChild(iframe);
-            } 
-        }
-
-        // --- Account & Favorites Logic ---
-        function updateAccountUI(user) {
-            if(user && !user.isAnonymous) {
-                loggedOutView.classList.add('hidden');
-                loggedInView.classList.remove('hidden');
-                userEmailSpan.textContent = user.email;
-            } else {
-                loggedOutView.classList.remove('hidden');
-                loggedInView.classList.add('hidden');
-                userEmailSpan.textContent = '';
             }
         }
 
-        async function handleSignUp(e) {
-            e.preventDefault();
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                showGameGrid();
-            } catch (error) {
-                alert(`Signup failed: ${error.message}`);
-            }
-        }
-        
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                 showGameGrid();
-            } catch (error) {
-                alert(`Login failed: ${error.message}`);
-            }
-        }
-
-        async function handleLogout() {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                 alert(`Logout failed: ${error.message}`);
-            }
-        }
-
-        async function toggleFavorite(gameId) {
-            if (userIsAnonymous) {
-                alert("Please create an account to save favorites!");
-                return;
-            }
-            const favIndex = userFavorites.indexOf(gameId);
-            if (favIndex > -1) {
-                userFavorites.splice(favIndex, 1);
-            } else {
-                userFavorites.push(gameId);
-            }
-            
-            const userDocRef = doc(db, `/artifacts/${appId}/users/${userId}`);
-            await setDoc(userDocRef, { favorites: userFavorites });
-
-            updateFavoritesUI();
-        }
-        
-        function toggleFavoritesView() {
-            isShowingFavorites = !isShowingFavorites;
-            document.querySelectorAll('.game-card').forEach(card => {
-                const gameId = card.dataset.gameId;
-                if (isShowingFavorites && !userFavorites.includes(gameId)) {
-                    card.classList.add('hidden');
-                } else {
-                    card.classList.remove('hidden');
-                }
-            });
-            favoritesBtn.textContent = isShowingFavorites ? 'All Games' : 'Favorites';
-        }
-
-
-        async function loadFavorites() {
-            if (userIsAnonymous || !userId) return;
-            const userDocRef = doc(db, `/artifacts/${appId}/users/${userId}`);
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists() && docSnap.data().favorites) {
-                userFavorites = docSnap.data().favorites;
-            } else {
-                userFavorites = [];
-            }
-            updateFavoritesUI();
-        }
-
-        function updateFavoritesUI() {
-            document.querySelectorAll('.favorite-star').forEach(star => {
-                const gameId = star.dataset.gameId;
-                if(userFavorites.includes(gameId)) {
-                    star.classList.add('favorited');
-                    star.innerHTML = '&#9733;';
-                } else {
-                    star.classList.remove('favorited');
-                    star.innerHTML = '&#9734;';
-                }
-            });
-        }
-
-
-        // --- Messaging & Notification Logic ---
-        function showToast(serverName) {
-            // Don't show toast if chat view is active and it's for the current server
-            if (!chatView.classList.contains('hidden') && serverTitle.textContent === serverName) {
-                return;
-            }
-        
-            // If a toast is already showing, clear its hide timer
-            if (toastTimeout) {
-                clearTimeout(toastTimeout);
-            }
-
-            toastServerName.textContent = serverName;
-            toastNotification.classList.remove('opacity-0', 'translate-y-20');
-
-            // Set a timer to hide it again
-            toastTimeout = setTimeout(() => {
-                toastNotification.classList.add('opacity-0', 'translate-y-20');
-            }, 4000); // 4 seconds
-        }
-
-        function updateNotificationDot() {
-            if (unreadServers.size > 0) {
-                notificationDot.classList.remove('hidden');
-            } else {
-                notificationDot.classList.add('hidden');
-            }
-        }
-
-        function setupNotificationListeners() {
-            if (!db || !appId) return;
-            // Clear any old listeners first
-            notificationListeners.forEach(unsubscribe => unsubscribe());
-            notificationListeners = [];
-
-            const pageLoadFirestoreTimestamp = Timestamp.fromMillis(pageLoadTimestamp);
-
-            servers.forEach(serverName => {
-                const sanitizedServerId = sanitizeForFirestore(serverName);
-                const messagesCollectionPath = `/artifacts/${appId}/public/data/chatRooms/${sanitizedServerId}/messages`;
-                const q = query(collection(db, messagesCollectionPath), where("timestamp", ">", pageLoadFirestoreTimestamp));
-
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === "added") {
-                            const message = change.doc.data();
-                            // Check if message is not from the current user
-                            if (message.sender !== userId) {
-                                unreadServers.add(serverName);
-                                updateNotificationDot();
-                                showToast(serverName);
-                            }
-                        }
-                    });
-                }, (error) => {
-                    console.error(`Error listening for notifications in ${serverName}:`, error);
-                });
-                notificationListeners.push(unsubscribe);
-            });
-        }
-
-        function sanitizeForFirestore(text) { return text.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s/g, ''); }
-        
-        function createServerList() {
-            serverListContainer.innerHTML = '';
-            servers.forEach(serverName => {
-                const button = document.createElement('button');
-                button.className = 'w-full bg-gray-700 hover:bg-purple-600 text-white font-bold py-3 rounded-lg transition duration-300';
-                button.textContent = serverName;
-                button.addEventListener('click', () => joinChat(serverName));
-                serverListContainer.appendChild(button);
-            });
-        }
-
-        function joinChat(serverId) {
-            if (!serverId) { alert("Invalid server."); return; }
-            joinView.classList.add('hidden');
-            chatView.classList.remove('hidden');
-            serverTitle.textContent = serverId;
-            
-            // Mark this server as read and update the notification dot
-            unreadServers.delete(serverId);
-            updateNotificationDot();
-
-            const sanitizedServerId = sanitizeForFirestore(serverId);
-            const messagesCollectionPath = `/artifacts/${appId}/public/data/chatRooms/${sanitizedServerId}/messages`;
-            const q = query(collection(db, messagesCollectionPath), orderBy("timestamp")); 
-
-            unsubscribeMessages = onSnapshot(q, (snapshot) => {
-                chatMessages.innerHTML = '';
-                const messages = [];
-                snapshot.forEach((doc) => {
-                    messages.push(doc.data());
-                });
-
-                // Client-side sorting is more reliable without needing composite indexes
-                messages.sort((a, b) => {
-                    const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
-                    const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
-                    return timeA - timeB;
-                });
-
-                messages.forEach(msgData => displayMessage(msgData));
-
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, (error) => {
-                console.error("Error listening to messages:", error);
-                leaveChat();
-            });
-        }
-        
-        function leaveChat() {
-            if (unsubscribeMessages) {
-                unsubscribeMessages();
-                unsubscribeMessages = null;
-            }
-        }
-
-        async function sendMessage(event) {
-            event.preventDefault();
-            const serverId = serverTitle.textContent;
-            const messageText = messageInput.value.trim();
-            if (messageText === '' || !serverId || !userId) return;
-
-            try {
-                 const sanitizedServerId = sanitizeForFirestore(serverId);
-                 const messagesCollectionPath = `/artifacts/${appId}/public/data/chatRooms/${sanitizedServerId}/messages`;
-                 await addDoc(collection(db, messagesCollectionPath), {
-                    text: messageText,
-                    sender: userId,
-                    timestamp: serverTimestamp()
-                });
-                messageInput.value = '';
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            } catch(error) {
-                console.error("Error sending message:", error);
-                alert("Message could not be sent.");
-            }
-        }
-
-        function displayMessage(data) {
-            const messageWrapper = document.createElement('div');
-            const messageBubble = document.createElement('div');
-            messageWrapper.classList.add('flex', 'flex-col', 'max-w-xs');
-            messageBubble.classList.add('px-4', 'py-2', 'rounded-lg', 'break-words');
-            
-            if (data.sender === userId) {
-                messageWrapper.classList.add('self-end', 'items-end');
-                messageBubble.classList.add('bg-purple-600');
-            } else {
-                messageWrapper.classList.add('self-start', 'items-start');
-                messageBubble.classList.add('bg-gray-600');
-            }
-            messageBubble.textContent = data.text;
-            messageWrapper.appendChild(messageBubble);
-            chatMessages.appendChild(messageWrapper);
-        }
-
-        // --- Event Listeners & Initializer ---
         closeGameBtn.addEventListener('click', showGameGrid);
-        messagingBtn.addEventListener('click', showMessagingView);
-        backToGamesBtn.addEventListener('click', showGameGrid);
-        leaveServerBtn.addEventListener('click', showGameGrid);
-        messageForm.addEventListener('submit', sendMessage);
-        accountBtn.addEventListener('click', showAccountView);
-        backToGamesFromAccountBtn.addEventListener('click', showGameGrid);
-        signupForm.addEventListener('submit', handleSignUp);
-        loginForm.addEventListener('submit', handleLogin);
-        logoutBtn.addEventListener('click', handleLogout);
-        favoritesBtn.addEventListener('click', toggleFavoritesView);
 
-        // --- Code Protection ---
-        // Disable right-click context menu
-        document.addEventListener('contextmenu', event => event.preventDefault());
-
-        // Disable keyboard shortcuts for developer tools
-        document.addEventListener('keydown', function (e) {
-            // F12
-            if (e.keyCode == 123) {
-                e.preventDefault();
-            }
-            // Ctrl+Shift+I
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
-                e.preventDefault();
-            }
-            // Ctrl+Shift+J
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
-                e.preventDefault();
-            }
-            // Ctrl+U
-            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
-                e.preventDefault();
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                gameContainer.requestFullscreen().catch(err => {
+                    showModal("Fullscreen error: " + err.message);
+                });
+            } else {
+                document.exitFullscreen();
             }
         });
 
-        // --- Initial Load ---
-        initFirebase();
-        createGameCards();
-        createServerList();
-        
-    </script>
+        // Launch in about:blank Unblocked Window
+        aboutBlankBtn.addEventListener('click', () => {
+            if (!currentGame) return;
+            const win = window.open('about:blank', '_blank');
+            if (!win) {
+                showModal("Pop-up blocker prevented opening about:blank tab! Allow popups for this site.", "Pop-Up Blocked");
+                return;
+            }
+            win.document.title = currentGame.name;
+            const doc = win.document;
+            const iframe = doc.createElement('iframe');
+            iframe.style.width = '100vw';
+            iframe.style.height = '100vh';
+            iframe.style.border = 'none';
+            iframe.style.position = 'fixed';
+            iframe.style.top = '0';
+            iframe.style.left = '0';
 
+            if (currentGame.builtIn) {
+                doc.body.innerHTML = '<h2 style="color:white;font-family:sans-serif;text-align:center;margin-top:20%;">Built-in canvas games run directly on main portal screen!</h2>';
+            } else {
+                iframe.src = currentGame.url;
+                doc.body.style.margin = '0';
+                doc.body.style.backgroundColor = 'black';
+                doc.body.appendChild(iframe);
+            }
+        });
+
+        function showGameGrid() {
+            if (currentCanvasLoop) cancelAnimationFrame(currentCanvasLoop);
+            gamePlayer.classList.add('hidden');
+            messagingView.classList.add('hidden');
+            accountView.classList.add('hidden');
+            gameGrid.classList.remove('hidden');
+            actionButtons.classList.remove('hidden');
+            gameContainer.innerHTML = '';
+        }
+
+        // Account Logic
+        accountBtn.addEventListener('click', openAccountView);
+        backToGamesFromAccountBtn.addEventListener('click', showGameGrid);
+
+        function generateCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        function updateAccountUI() {
+            loggedOutView.classList.add('hidden');
+            verificationView.classList.add('hidden');
+            loggedInView.classList.add('hidden');
+
+            if (!currentUser) {
+                loggedOutView.classList.remove('hidden');
+            } else if (!currentUser.isVerified) {
+                verificationView.classList.remove('hidden');
+                verifyEmailDisplay.textContent = currentUser.email;
+                demoCodeDisplay.textContent = currentUser.verificationCode || '123456';
+            } else {
+                loggedInView.classList.remove('hidden');
+                userDisplayNameSpan.textContent = currentUser.displayName;
+            }
+        }
+
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            if (name.length < 2) {
+                showModal("Please enter a valid display name (at least 2 characters).");
+                return;
+            }
+
+            const code = generateCode();
+            currentUser = { displayName: name, email: email, isVerified: false, verificationCode: code };
+            localStorage.setItem('spew14_user', JSON.stringify(currentUser));
+            showModal(`Account created! Simulated verification code: ${code}`, "Verification Sent");
+            updateAccountUI();
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const existingUsers = JSON.parse(localStorage.getItem('spew14_user'));
+            
+            if (existingUsers && existingUsers.email === email) {
+                currentUser = existingUsers;
+            } else {
+                const name = email.split('@')[0] || "Gamer";
+                const code = generateCode();
+                currentUser = { displayName: name, email: email, isVerified: false, verificationCode: code };
+            }
+            
+            localStorage.setItem('spew14_user', JSON.stringify(currentUser));
+            updateAccountUI();
+        });
+
+        verifyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputCode = verifyCodeInput.value.trim();
+
+            if (inputCode === currentUser.verificationCode) {
+                currentUser.isVerified = true;
+                delete currentUser.verificationCode;
+                localStorage.setItem('spew14_user', JSON.stringify(currentUser));
+                verifyCodeInput.value = '';
+                showModal("Email verified successfully!", "Verification Complete");
+                updateAccountUI();
+            } else {
+                showModal("Incorrect code. Please use the simulated inbox code.", "Invalid Code");
+            }
+        });
+
+        resendCodeBtn.addEventListener('click', () => {
+            const newCode = generateCode();
+            currentUser.verificationCode = newCode;
+            localStorage.setItem('spew14_user', JSON.stringify(currentUser));
+            showModal(`New verification code: ${newCode}`, "Code Resent");
+            updateAccountUI();
+        });
+
+        cancelVerifyBtn.addEventListener('click', () => {
+            currentUser = null;
+            localStorage.removeItem('spew14_user');
+            updateAccountUI();
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            localStorage.removeItem('spew14_user');
+            updateAccountUI();
+            showModal("Logged out successfully.");
+        });
+
+        // Messaging Logic
+        messagingBtn.addEventListener('click', () => {
+            if (!checkAuth("access messaging")) return;
+
+            gameGrid.classList.add('hidden');
+            actionButtons.classList.add('hidden');
+            gamePlayer.classList.add('hidden');
+            accountView.classList.add('hidden');
+            messagingView.classList.remove('hidden');
+            joinView.classList.remove('hidden');
+            chatView.classList.add('hidden');
+            renderServerList();
+        });
+
+        backToGamesBtn.addEventListener('click', showGameGrid);
+
+        function renderServerList() {
+            serverList.innerHTML = '';
+            servers.forEach(srv => {
+                const btn = document.createElement('button');
+                btn.className = "w-full bg-slate-700/60 hover:bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg transition text-left flex justify-between items-center text-xs border border-slate-600/50";
+                btn.innerHTML = `<span># ${srv}</span><span class="text-[10px] text-slate-400">&rarr;</span>`;
+                btn.addEventListener('click', () => openServerChat(srv));
+                serverList.appendChild(btn);
+            });
+        }
+
+        function openServerChat(srv) {
+            activeServer = srv;
+            joinView.classList.add('hidden');
+            chatView.classList.remove('hidden');
+            serverTitle.textContent = `# ${srv}`;
+            renderMessages();
+        }
+
+        leaveServerBtn.addEventListener('click', () => {
+            chatView.classList.add('hidden');
+            joinView.classList.remove('hidden');
+            activeServer = null;
+        });
+
+        function renderMessages() {
+            chatMessages.innerHTML = '';
+            const msgs = mockMessages[activeServer] || [];
+            msgs.forEach(msg => {
+                const isMe = currentUser && msg.sender === currentUser.displayName;
+                const msgWrapper = document.createElement('div');
+                msgWrapper.className = `flex flex-col max-w-xs sm:max-w-md ${isMe ? 'self-end items-end' : 'self-start items-start'}`;
+                
+                msgWrapper.innerHTML = `
+                    <div class="text-[10px] text-slate-400 mb-0.5 px-1">${isMe ? 'You' : msg.sender} • ${msg.time}</div>
+                    <div class="px-3.5 py-2 rounded-xl break-words text-xs ${isMe ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-100'}">
+                        ${msg.text}
+                    </div>
+                `;
+                chatMessages.appendChild(msgWrapper);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            const sender = currentUser ? currentUser.displayName : 'Guest';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (!mockMessages[activeServer]) mockMessages[activeServer] = [];
+            mockMessages[activeServer].push({ sender, text, time });
+
+            messageInput.value = '';
+            renderMessages();
+        });
+
+        // Init App
+        renderGames();
+        renderRecents();
+    </script>
 </body>
 </html>
